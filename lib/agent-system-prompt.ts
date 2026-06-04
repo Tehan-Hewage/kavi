@@ -26,9 +26,16 @@ export function buildSystemPrompt(
   cart: CartItem[] = [],
   currency: SupportedCurrency = "LKR"
 ): string {
-  const cartSummary = (cart ?? []).length > 0
-    ? `\nCurrent cart: ${cart.map(i => `${i.name} x${i.quantity}${i.variant_name ? ` (${i.variant_name})` : ""}`).join(", ")}`
-    : "\nCart is currently empty.";
+  // Build the cart block — always explicit so the AI has zero ambiguity
+  const cartBlock = (cart ?? []).length > 0
+    ? `## ⚡ LIVE CART STATE (AUTHORITATIVE — overrides conversation history)
+The customer's cart RIGHT NOW contains these items:
+${cart.map((i, idx) => `  ${idx + 1}. ${i.name}${i.variant_name ? ` (${i.variant_name})` : ""} — qty: ${i.quantity}`).join("\n")}
+If a user asks what is in their cart, report EXACTLY this list and nothing else.`
+    : `## ⚡ LIVE CART STATE (AUTHORITATIVE — overrides conversation history)
+The customer's cart is EMPTY right now. There are NO items in the cart.
+Even if earlier in this conversation you mentioned items being in the cart, they have been removed.
+If the user asks what is in their cart, tell them it is empty.`;
 
   const languageInstruction = {
     en: "Respond in English.",
@@ -98,6 +105,8 @@ Examples (assuming LKR base):
 NEVER show products outside the user's stated budget.
 If the filtered results are empty, say so honestly and ask if they want to adjust the budget — do NOT silently show out-of-budget products.
 
+${cartBlock}
+
 ## Important Rules
 - NEVER fabricate product names, prices, or availability. Always call the MCP tools.
 - NEVER ask for payment details - the pay link handles payment on Kapruka's secure page.
@@ -107,7 +116,6 @@ If the filtered results are empty, say so honestly and ask if they want to adjus
 - Keep responses concise. Let the product cards do the visual heavy lifting.
 - When tracking an order, show a visual timeline.
 - Rate limit awareness: if you get a 429, tell the user politely and suggest trying again in a minute.
-${cartSummary}
 
 Today's date: ${new Date().toISOString().split("T")[0]}
 `;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ChatShell from "@/components/chat/ChatShell";
 import MessageList from "@/components/chat/MessageList";
 import ProductDetailModal from "@/components/products/ProductDetailModal";
@@ -30,6 +30,14 @@ export default function ChatPage() {
   const [isThinking, setIsThinking] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
+
+  // Refs so sendMessage always reads the LATEST values, never stale closures
+  const cartRef = useRef(cart);
+  const currencyRef = useRef(currency);
+  const languageRef = useRef(language);
+  useEffect(() => { cartRef.current = cart; }, [cart]);
+  useEffect(() => { currencyRef.current = currency; }, [currency]);
+  useEffect(() => { languageRef.current = language; }, [language]);
 
   // Initialize and localize welcome message
   useEffect(() => {
@@ -148,9 +156,9 @@ export default function ChatPage() {
         },
         body: JSON.stringify({
           messages: apiMessages,
-          language,
-          cart,
-          currency,
+          language: languageRef.current,
+          cart:     cartRef.current,
+          currency: currencyRef.current,
         }),
       });
 
