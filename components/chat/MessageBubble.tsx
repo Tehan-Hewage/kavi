@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useContext } from "react";
 import { motion } from "framer-motion";
 import { ChatMessage, DeliveryQuote } from "@/lib/types";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { CurrencyContext } from "@/components/providers/CurrencyProvider";
 import ProductCarousel from "../products/ProductCarousel";
 import CategoryChips from "../ui/CategoryChips";
 import PayLinkCard from "../checkout/PayLinkCard";
@@ -34,14 +35,43 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onSelectCategory,
   onSubmitCheckout,
 }) => {
+  const hasRenderableContent = (msg: ChatMessage) => {
+    if (msg.content && msg.content.trim() !== "") {
+      return true;
+    }
+    if (isStreaming) {
+      return false;
+    }
+    if (msg.toolResults && msg.toolResults.length > 0) {
+      return msg.toolResults.some((tr) => {
+        if (!tr.result) return false;
+        if (tr.tool === "kapruka_search_products") {
+          const list = tr.result?.results || (Array.isArray(tr.result) ? tr.result : null);
+          return list && list.length > 0;
+        }
+        if (tr.tool === "kapruka_list_categories" || tr.tool === "kapruka_get_categories") {
+          const list = tr.result?.categories || tr.result || [];
+          return list.length > 0;
+        }
+        return true;
+      });
+    }
+    return false;
+  };
+
+  if (!hasRenderableContent(message)) {
+    return null;
+  }
   const { language } = useLanguage();
+  const currencyCtx = useContext(CurrencyContext);
+  const currency = currencyCtx ? currencyCtx.currency : "LKR";
   const isUser = message.role === "user";
   const isSinhala = language === "si";
   const isTamil = language === "ta";
 
   const fontClass = isSinhala ? "font-sinhala" : isTamil ? "font-tamil" : "";
 
-  const parseMarkdown = (rawText: string) => {
+  const parseMarkdown = (rawText: string, alignCenter = false) => {
     if (!rawText) return null;
 
     const lines = rawText.split("\n");
@@ -100,7 +130,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           parsedElements.push(<div key={`br-${lineIdx}`} className="h-2" />);
         } else {
           parsedElements.push(
-            <p key={`p-${lineIdx}`} className="text-sm md:text-base leading-relaxed mb-1.5 whitespace-pre-wrap">
+            <p
+              key={`p-${lineIdx}`}
+              className={`text-sm md:text-base leading-relaxed mb-1.5 whitespace-pre-wrap ${alignCenter ? "text-center" : ""}`}
+            >
               {parseInline(line)}
             </p>
           );
@@ -120,23 +153,23 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   };
 
   // Parse text message and replace `[checkout-form]` with the form component
-  const renderMessageContent = (text: string) => {
+  const renderMessageContent = (text: string, alignCenter = false) => {
     if (!text) return null;
 
     if (text.includes("[checkout-form]")) {
       const parts = text.split("[checkout-form]");
       return (
         <div className="space-y-3 w-full">
-          {parts[0] && <div className="leading-relaxed">{parseMarkdown(parts[0])}</div>}
+          {parts[0] && <div className="leading-relaxed">{parseMarkdown(parts[0], alignCenter)}</div>}
           {onSubmitCheckout && (
             <CheckoutForm onSubmit={onSubmitCheckout} />
           )}
-          {parts[1] && <div className="leading-relaxed">{parseMarkdown(parts[1])}</div>}
+          {parts[1] && <div className="leading-relaxed">{parseMarkdown(parts[1], alignCenter)}</div>}
         </div>
       );
     }
 
-    return parseMarkdown(text);
+    return parseMarkdown(text, alignCenter);
   };
 
   const renderToolResult = (tool: string, result: any, input: any) => {
@@ -193,7 +226,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               {deliverable && (
                 <div className="flex justify-between">
                   <span className="text-gray-500">Delivery Fee:</span>
-                  <span className="text-gray-900 dark:text-white font-extrabold">Rs {deliveryFee.toLocaleString()}</span>
+                  <span className="text-gray-900 dark:text-white font-extrabold">
+                    {currency === "USD"
+                      ? `Rs ${deliveryFee.toLocaleString()} (Approx. $${(deliveryFee / 300).toFixed(2)})`
+                      : `Rs ${deliveryFee.toLocaleString()}`}
+                  </span>
                 </div>
               )}
               {result.perishable_warning && (
@@ -208,6 +245,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       case "kapruka_create_order":
         const checkoutUrl = result.checkout_url || result.pay_url;
         const orderRef = result.order_ref || result.order_id;
+        if (!checkoutUrl || !orderRef) {
+          return (
+            <div key={tool} className="text-xs text-rose-600 dark:text-rose-400 mt-1 italic font-semibold px-2 py-1.5 border border-rose-100 dark:border-rose-900/30 rounded-xl bg-rose-50/30 dark:bg-rose-950/10 max-w-sm">
+              Order creation failed: {typeof result === "string" ? result : (result.message || JSON.stringify(result))}
+            </div>
+          );
+        }
         const grandTotal = result.summary?.grand_total || result.total || 0;
         const deliveryCost = result.summary?.delivery_fee || result.delivery || 0;
         return (
@@ -265,6 +309,60 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     }
   };
 
+  const isWelcome = message.id === "welcome";
+
+  if (isWelcome) {
+    return (
+      <motion.div
+        variants={customBubbleVariants}
+        initial="hidden"
+        animate="visible"
+        className="w-full flex flex-col items-center justify-center py-8 px-4 text-center"
+      >
+        {/* Floating Monogram Circle */}
+        <motion.div
+          animate={{ y: [0, -8, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-3 shadow-lg"
+          style={{
+            background: "linear-gradient(135deg, #4C1D6E 0%, #6B2D96 100%)",
+            boxShadow:  "0 12px 32px rgba(76,29,110,0.4), 0 0 0 6px rgba(76,29,110,0.1)",
+          }}
+        >
+          K
+        </motion.div>
+
+        {/* Kavi Title */}
+        <h2 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-primary)" }}>
+          Kavi
+        </h2>
+
+        {/* Powered by Kapruka Tag */}
+        <div
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-2 mb-4"
+          style={{ background: "#FFF3CC", color: "#4C1D6E" }}
+        >
+          <img src="/kapruka-logo-small.svg" alt="" className="h-3.5" />
+          Powered by Kapruka
+        </div>
+
+        {/* Center welcome card */}
+        <div
+          className="w-full max-w-lg border rounded-2xl px-6 py-5"
+          style={{
+            borderColor: "var(--border-subtle)",
+            background:  "var(--bg-surface)",
+            boxShadow:   "var(--card-shadow)",
+          }}
+        >
+          <div className={`${fontClass} text-sm md:text-base font-medium leading-relaxed text-center`} style={{ color: "var(--text-primary)" }}>
+            {renderMessageContent(message.content, true)}
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       variants={customBubbleVariants}
@@ -276,7 +374,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       {!isUser && (
         <div
           className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-bold mb-1 shadow-sm"
-          style={{ background: "var(--brand-purple)" }}
+          style={{ background: "#4C1D6E" }}
         >
           K
         </div>
@@ -288,18 +386,29 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* Main Text Content */}
         {message.content && (
           <div
-            className={`px-4 py-3 ${fontClass}`}
-            style={{
-              background:   isUser ? "var(--brand-purple)" : "var(--agent-bubble)",
-              color:        isUser ? "#FFFFFF" : "var(--text-primary)",
-              borderRadius: isUser
-                ? "20px 20px 4px 20px"
-                : "4px 20px 20px 20px",
-              boxShadow:    "var(--shadow-card)",
-              fontSize:     "15px",
-              lineHeight:   "1.65",
-              maxWidth:     "100%",
-            }}
+            className={`px-4 py-3 agent-bubble ${fontClass}`}
+            style={
+              isUser
+                ? {
+                    background:   "#4C1D6E",
+                    color:        "#FFFFFF",
+                    borderRadius: "20px 20px 4px 20px",
+                    boxShadow:    "0 2px 8px rgba(76,29,110,0.25)",
+                    fontSize:     "15px",
+                    lineHeight:   "1.65",
+                    maxWidth:     "100%",
+                  }
+                : {
+                    background:   "var(--card-bg)",
+                    color:        "var(--text-primary)",
+                    borderRadius: "4px 20px 20px 20px",
+                    boxShadow:    "var(--card-shadow)",
+                    borderLeft:   "3px solid #4C1D6E",
+                    fontSize:     "15px",
+                    lineHeight:   "1.65",
+                    maxWidth:     "100%",
+                  }
+            }
           >
             {renderMessageContent(message.content)}
             {/* Streaming Cursor */}
@@ -308,11 +417,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         )}
 
         {/* Embedded Tool Results */}
-        {message.toolResults && (() => {
+        {!isStreaming && message.toolResults && (() => {
           const hasSuccessfulSearch = message.toolResults.some(tr => {
             if (tr.tool !== "kapruka_search_products") return false;
             const list = tr.result?.results || (Array.isArray(tr.result) ? tr.result : null);
             return list && list.length > 0;
+          });
+
+          const hasSuccessfulOrder = message.toolResults.some(tr => {
+            if (tr.tool !== "kapruka_create_order") return false;
+            const res = tr.result;
+            return res && typeof res === "object" && (res.checkout_url || res.pay_url);
           });
           
           return message.toolResults
@@ -322,6 +437,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 const isSuccess = list && list.length > 0;
                 
                 if (hasSuccessfulSearch) {
+                  return isSuccess;
+                }
+              }
+              if (tr.tool === "kapruka_create_order") {
+                const res = tr.result;
+                const isSuccess = res && typeof res === "object" && (res.checkout_url || res.pay_url);
+                
+                if (hasSuccessfulOrder) {
                   return isSuccess;
                 }
               }

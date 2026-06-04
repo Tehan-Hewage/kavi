@@ -17,6 +17,14 @@ const nextConfig = {
       {
         protocol: "http",
         hostname: "kapruka.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.shopify.com",
+      },
+      {
+        protocol: "http",
+        hostname: "cdn.shopify.com",
       }
     ]
   },

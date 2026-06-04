@@ -4,6 +4,10 @@ export async function callMcpTool(
   toolName: string,
   input: Record<string, unknown>
 ): Promise<unknown> {
+  if (toolName === "kapruka_clear_cart") {
+    return { success: true, message: "Cart cleared successfully" };
+  }
+
   const client = await getMcpClient();
 
   try {

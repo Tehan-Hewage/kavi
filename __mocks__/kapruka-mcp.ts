@@ -55,6 +55,10 @@ const handlers = [
           resultPayload = makeOrder();
           break;
 
+        case "kapruka_clear_cart":
+          resultPayload = { success: true, message: "Cart cleared successfully" };
+          break;
+
         case "kapruka_track_order":
           resultPayload = makeOrderTracking();
           break;
@@ -110,6 +114,7 @@ const handlers = [
             { name: "kapruka_create_order", description: "Create order", inputSchema: { type: "object", properties: {} } },
             { name: "kapruka_track_order", description: "Track order", inputSchema: { type: "object", properties: {} } },
             { name: "kapruka_check_availability", description: "Check availability", inputSchema: { type: "object", properties: {} } },
+            { name: "kapruka_clear_cart", description: "Clear cart", inputSchema: { type: "object", properties: {} } },
           ]
         }
       });

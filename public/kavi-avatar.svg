@@ -1,32 +1,10 @@
-<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="avatarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4A3AE8" />
-      <stop offset="100%" stop-color="#3528C7" />
-    </linearGradient>
-    <linearGradient id="lotusGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#F5C518" />
-      <stop offset="100%" stop-color="#D4A514" />
+    <linearGradient id="kaviAvatarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4C1D6E" />
+      <stop offset="100%" stop-color="#6B2D96" />
     </linearGradient>
   </defs>
-  <!-- Background Circle -->
-  <circle cx="50" cy="50" r="48" fill="url(#avatarGrad)" stroke="#F5C518" stroke-width="2" />
-  
-  <!-- Face/Character Motif -->
-  <path d="M50 25C38.95 25 30 33.95 30 45C30 52.88 34.55 59.7 41.15 63.02C40.4 64.25 40 65.58 40 67C40 72.52 44.48 77 50 77C55.52 77 60 72.52 60 67C60 65.58 59.6 64.25 58.85 63.02C65.45 59.7 70 52.88 70 45C70 33.95 61.05 25 50 25Z" fill="#FFFFFF" opacity="0.95" />
-  
-  <!-- Smiling Eyes -->
-  <path d="M41 43C43.5 41 45.5 43 45.5 43" stroke="#4A3AE8" stroke-width="3" stroke-linecap="round" />
-  <path d="M59 43C56.5 41 54.5 43 54.5 43" stroke="#4A3AE8" stroke-width="3" stroke-linecap="round" />
-  
-  <!-- Happy Smile -->
-  <path d="M46 51C46 51 48 54 50 54C52 54 54 51 54 51" stroke="#4A3AE8" stroke-width="3" stroke-linecap="round" />
-  
-  <!-- Sri Lankan Lotus Crown/Hair Motif (Yellow) -->
-  <path d="M50 18C52 23.5 56 26.5 56 26.5C56 26.5 51 27.5 50 31C49 27.5 44 26.5 44 26.5C44 26.5 48 23.5 50 18Z" fill="url(#lotusGrad)" />
-  <path d="M43 21C45.5 25.5 49 27.5 49 27.5C49 27.5 44.5 29.5 43.5 33.5C42.5 29.5 38 27.5 38 27.5C38 27.5 41.5 25.5 43 21Z" fill="url(#lotusGrad)" />
-  <path d="M57 21C54.5 25.5 51 27.5 51 27.5C51 27.5 55.5 29.5 56.5 33.5C57.5 29.5 62 27.5 62 27.5C62 27.5 58.5 25.5 57 21Z" fill="url(#lotusGrad)" />
-  
-  <!-- Small Red/Orange Bindi Dot (Traditional Touch) -->
-  <circle cx="50" cy="40" r="2" fill="#E11D48" />
+  <circle cx="40" cy="40" r="40" fill="url(#kaviAvatarGrad)" />
+  <text x="40" y="52" font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" font-weight="800" font-size="36" fill="#FFFFFF" text-anchor="middle">K</text>
 </svg>

@@ -1,0 +1,5 @@
+<svg width="170" height="50" viewBox="0 0 170 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <text x="10" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" font-weight="800" font-size="24" fill="#FFFFFF" letter-spacing="-0.5px">kapruka</text>
+  <text x="106" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" font-weight="800" font-size="24" fill="#FFC700" letter-spacing="-0.5px">.com</text>
+  <path d="M12 36 C 45 42, 115 42, 158 36" stroke="#FFC700" stroke-width="3" stroke-linecap="round" fill="none" />
+</svg>

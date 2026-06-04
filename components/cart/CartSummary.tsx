@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 
 interface CartSummaryProps {
   subtotal: number;
@@ -13,17 +14,7 @@ export const CartSummary: React.FC<CartSummaryProps> = ({
   deliveryFee = 0,
 }) => {
   const { t } = useLanguage();
-
-  const formatLKR = (amount: number) => {
-    return new Intl.NumberFormat("en-LK", {
-      style: "currency",
-      currency: "LKR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })
-      .format(amount)
-      .replace("LKR", "Rs");
-  };
+  const { formatPrice } = useCurrency();
 
   const total = subtotal + deliveryFee;
 
@@ -32,7 +23,7 @@ export const CartSummary: React.FC<CartSummaryProps> = ({
       <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
         <span>{t.subtotal}</span>
         <span className="font-semibold text-gray-800 dark:text-gray-200">
-          {formatLKR(subtotal)}
+          {formatPrice(subtotal)}
         </span>
       </div>
 
@@ -40,14 +31,14 @@ export const CartSummary: React.FC<CartSummaryProps> = ({
         <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
           <span>{t.deliveryFee}</span>
           <span className="font-semibold text-gray-800 dark:text-gray-200">
-            {formatLKR(deliveryFee)}
+            {formatPrice(deliveryFee)}
           </span>
         </div>
       )}
 
       <div className="flex justify-between text-base font-black text-gray-900 dark:text-white pt-2 border-t border-gray-50 dark:border-gray-800/50">
         <span>{t.total}</span>
-        <span>{formatLKR(total)}</span>
+        <span>{formatPrice(total)}</span>
       </div>
     </div>
   );

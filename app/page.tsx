@@ -6,6 +6,7 @@ import MessageList from "@/components/chat/MessageList";
 import ProductDetailModal from "@/components/products/ProductDetailModal";
 import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCart } from "@/components/providers/CartProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { ChatMessage } from "@/lib/types";
 
 const formatFriendlyError = (errorMsg: string): string => {
@@ -23,9 +24,11 @@ const formatFriendlyError = (errorMsg: string): string => {
 
 export default function ChatPage() {
   const { language } = useLanguage();
-  const { cart, cartCount } = useCart();
+  const { cart, cartCount, clearCart } = useCart();
+  const { currency } = useCurrency();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isThinking, setIsThinking] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
 
   // Initialize and localize welcome message
@@ -62,8 +65,11 @@ export default function ChatPage() {
 
   // Determine active suggestion chips context
   const getChipContext = (): "initial" | "afterSearch" | "afterCart" | "afterOrder" => {
-    const lastMessage = messages[messages.length - 1];
-    
+    // Scan messages backwards to find the last meaningful assistant message
+    const meaningfulMessages = messages.filter(
+      (msg) => msg.role === "assistant" && (msg.content || (msg.toolResults && msg.toolResults.length > 0))
+    );
+
     const hasCreatedOrder = messages.some(msg => 
       msg.toolResults?.some(tr => tr.tool === "kapruka_create_order")
     );
@@ -71,8 +77,16 @@ export default function ChatPage() {
       return "afterOrder";
     }
 
-    if (lastMessage?.toolResults?.some(tr => tr.tool === "kapruka_search_products")) {
-      return "afterSearch";
+    if (meaningfulMessages.length > 0) {
+      const lastMeaningful = meaningfulMessages[meaningfulMessages.length - 1];
+
+      if (lastMeaningful.toolResults?.some(tr => tr.tool === "kapruka_search_products")) {
+        return "afterSearch";
+      }
+
+      if (lastMeaningful.content?.includes("[checkout-form]") || lastMeaningful.content?.toLowerCase().includes("checkout")) {
+        return "afterCart";
+      }
     }
 
     if (cartCount > 0) {
@@ -111,6 +125,7 @@ export default function ChatPage() {
     ]);
 
     setIsThinking(true);
+    setIsStreaming(true);
 
     // Convert messages to Anthropic API shape
     const apiMessages = newMessages.map((msg) => {
@@ -135,6 +150,7 @@ export default function ChatPage() {
           messages: apiMessages,
           language,
           cart,
+          currency,
         }),
       });
 
@@ -183,6 +199,9 @@ export default function ChatPage() {
                   return prev;
                 });
               } else if (data.type === "tool_result") {
+                if (data.tool === "kapruka_clear_cart") {
+                  clearCart();
+                }
                 setMessages((prev) => {
                   if (prev.length === 0) return prev;
                   const lastMsg = prev[prev.length - 1];
@@ -194,7 +213,8 @@ export default function ChatPage() {
                     
                     if (!isDuplicate) {
                       const updatedResults = [...existingResults];
-                      if (data.tool === "kapruka_create_order") {
+                      if (data.tool === "kapruka_create_order" && data.result && typeof data.result === "object" && (data.result.checkout_url || data.result.pay_url)) {
+                        clearCart();
                         const itemsSummary = cart.map((item: any) => ({
                           name: item.name,
                           quantity: item.quantity,
@@ -205,7 +225,9 @@ export default function ChatPage() {
                           result: {
                             ...data.result,
                             items: itemsSummary,
-                            delivery: 350
+                            delivery: data.result?.summary?.delivery_fee !== undefined
+                              ? data.result.summary.delivery_fee
+                              : (data.result?.delivery || 350)
                           },
                           input: data.input
                         });
@@ -309,6 +331,7 @@ export default function ChatPage() {
       });
     } finally {
       setIsThinking(false);
+      setIsStreaming(false);
     }
   };
 
@@ -353,6 +376,7 @@ export default function ChatPage() {
         <MessageList
           messages={messages}
           isThinking={isThinking}
+          isStreaming={isStreaming}
           onOpenDetails={handleOpenDetails}
           onSelectCategory={handleSelectCategory}
           onSubmitCheckout={handleSubmitCheckout}

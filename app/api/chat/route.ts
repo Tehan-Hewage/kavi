@@ -98,28 +98,26 @@ const KAPRUKA_TOOLS: Anthropic.Tool[] = [
           description: "Person who receives the delivery.",
           properties: {
             name:    { type: "string", description: "Recipient full name" },
-            phone:   { type: "string", description: "Recipient phone number" },
-            address: { type: "string", description: "Delivery street address" },
-            city:    { type: "string", description: "Canonical city name (use kapruka_list_delivery_cities to verify)" }
+            phone:   { type: "string", description: "Recipient phone number" }
           },
-          required: ["name", "phone", "address", "city"]
+          required: ["name", "phone"]
         },
         delivery: {
           type: "object",
-          description: "Delivery timing.",
+          description: "Delivery details and timing.",
           properties: {
             date:         { type: "string", description: "Delivery date (YYYY-MM-DD)" },
+            address:      { type: "string", description: "Delivery street address" },
+            city:         { type: "string", description: "Canonical city name (use kapruka_list_delivery_cities to verify)" },
             instructions: { type: "string", description: "Optional special instructions" }
           },
-          required: ["date"]
+          required: ["date", "address", "city"]
         },
         sender: {
           type: "object",
           description: "Person placing the order (shown on gift card).",
           properties: {
             name:      { type: "string", description: "Sender name shown on card" },
-            email:     { type: "string", description: "Sender email for order confirmation" },
-            phone:     { type: "string", description: "Sender phone number" },
             anonymous: { type: "boolean", description: "Hide sender identity from recipient" }
           },
           required: ["name"]
@@ -139,6 +137,14 @@ const KAPRUKA_TOOLS: Anthropic.Tool[] = [
         order_number: { type: "string", description: "Order number from confirmation email (e.g. 'VIMP34456CB2')." }
       },
       required: ["order_number"]
+    }
+  },
+  {
+    name: "kapruka_clear_cart",
+    description: "Clear all items from the customer's shopping cart. Call this when the user explicitly asks to clear, empty, or reset their cart.",
+    input_schema: {
+      type: "object",
+      properties: {}
     }
   }
 ];
@@ -235,28 +241,26 @@ const GEMINI_TOOLS = [
           description: "Person who receives the delivery.",
           properties: {
             name:    { type: "STRING", description: "Recipient full name" },
-            phone:   { type: "STRING", description: "Recipient phone number" },
-            address: { type: "STRING", description: "Delivery street address" },
-            city:    { type: "STRING", description: "Canonical city name (use kapruka_list_delivery_cities to verify)" }
+            phone:   { type: "STRING", description: "Recipient phone number" }
           },
-          required: ["name", "phone", "address", "city"]
+          required: ["name", "phone"]
         },
         delivery: {
           type: "OBJECT",
-          description: "Delivery timing.",
+          description: "Delivery details and timing.",
           properties: {
             date:         { type: "STRING", description: "Delivery date (YYYY-MM-DD)" },
+            address:      { type: "STRING", description: "Delivery street address" },
+            city:         { type: "STRING", description: "Canonical city name (use kapruka_list_delivery_cities to verify)" },
             instructions: { type: "STRING", description: "Optional special instructions" }
           },
-          required: ["date"]
+          required: ["date", "address", "city"]
         },
         sender: {
           type: "OBJECT",
           description: "Person placing the order (shown on gift card).",
           properties: {
             name:      { type: "STRING", description: "Sender name shown on card" },
-            email:     { type: "STRING", description: "Sender email for order confirmation" },
-            phone:     { type: "STRING", description: "Sender phone number" },
             anonymous: { type: "BOOLEAN", description: "Hide sender identity from recipient" }
           },
           required: ["name"]
@@ -277,13 +281,21 @@ const GEMINI_TOOLS = [
       },
       required: ["order_number"]
     }
+  },
+  {
+    name: "kapruka_clear_cart",
+    description: "Clear all items from the customer's shopping cart. Call this when the user explicitly asks to clear, empty, or reset their cart.",
+    parameters: {
+      type: "OBJECT",
+      properties: {}
+    }
   }
 ];
 
 export async function POST(req: NextRequest) {
-  const { messages, language, cart } = await req.json();
+  const { messages, language, cart, currency } = await req.json();
   
-  const systemPrompt = buildSystemPrompt(language, cart || []);
+  const systemPrompt = buildSystemPrompt(language, cart || [], currency || "LKR");
 
   // Agentic loop with tool use
   const encoder = new TextEncoder();

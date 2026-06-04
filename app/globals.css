@@ -1,104 +1,135 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Sinhala:wght@400;500;600;700;800&family=Noto+Sans+Tamil:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Sinhala:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ─── CSS Variables (light mode default) ─────────────────── */
+/* ─── Light mode (default) — matches kapruka.com ─── */
 :root {
-  --bg-page:          #F7F7FB;
-  --bg-surface:       #FFFFFF;
-  --bg-subtle:        #F0F0F7;
-  --text-primary:     #0E0D1A;
-  --text-secondary:   #5C5A7A;
-  --text-tertiary:    #9896B4;
-  --border-subtle:    #E4E3F2;
-  --border-strong:    #C4C2E0;
-  --brand-purple:     #4A3AE8;
-  --brand-yellow:     #F5C518;
-  --user-bubble:      #4A3AE8;
-  --agent-bubble:     #FFFFFF;
-  --shadow-card:      0 2px 8px rgba(74,58,232,0.08);
+  /* Brand */
+  --k-purple:          #4C1D6E;
+  --k-purple-dark:     #3A1254;
+  --k-purple-darker:   #280D3B;
+  --k-purple-light:    #6B2D96;
+  --k-purple-tint:     #F3EEFA;
+  --k-purple-tint2:    #E8D8F8;
+  --k-yellow:          #FFC700;
+  --k-yellow-dark:     #E6B400;
+  --k-yellow-darker:   #CC9F00;
+  --k-yellow-light:    #FFF3CC;
+  --k-yellow-text:     #1A1000;
+
+  /* Surfaces */
+  --bg-page:           #F5F5F5;
+  --bg-surface:        #FFFFFF;
+  --bg-subtle:         #FAFAFA;
+  --bg-header:         #4C1D6E;
+
+  /* Text */
+  --text-primary:      #111111;
+  --text-secondary:    #5C5C5C;
+  --text-tertiary:     #9A9A9A;
+  --text-on-purple:    #FFFFFF;
+  --text-price:        #4C1D6E;
+
+  /* Borders */
+  --border-subtle:     #EBEBEB;
+  --border-strong:     #D6D6D6;
+  --border-focus:      #4C1D6E;
+
+  /* Chat bubbles */
+  --bubble-user-bg:    #4C1D6E;
+  --bubble-user-text:  #FFFFFF;
+  --bubble-agent-bg:   #FFFFFF;
+  --bubble-agent-text: #111111;
+
+  /* Cards */
+  --card-bg:           #FFFFFF;
+  --card-border:       #EBEBEB;
+  --card-shadow:       0 2px 8px rgba(76,29,110,0.08);
+  --card-shadow-hover: 0 8px 24px rgba(76,29,110,0.18);
+  --card-radius:       12px;
+
+  /* Input */
+  --input-bg:          #F5F5F5;
+  --input-border:      #EBEBEB;
+  --input-focus-border:#4C1D6E;
+  --input-focus-shadow:0 0 0 3px rgba(76,29,110,0.12);
 }
 
-/* ─── Dark mode ───────────────────────────────────────────── */
+/* ─── Dark mode ─── */
 .dark {
-  --bg-page:          #0C0B17;
-  --bg-surface:       #161526;
-  --bg-subtle:        #1E1D32;
-  --text-primary:     #EEEDF8;
-  --text-secondary:   #9896B4;
-  --text-tertiary:    #5C5A7A;
-  --border-subtle:    #2A2840;
-  --border-strong:    #4A3AE8;
-  --user-bubble:      #4A3AE8;
-  --agent-bubble:     #1E1D32;
-  --shadow-card:      0 2px 8px rgba(0,0,0,0.3);
+  --bg-page:           #100820;
+  --bg-surface:        #1A0D2E;
+  --bg-subtle:         #221040;
+  --bg-header:         #280D3B;
+
+  --text-primary:      #F0EAF8;
+  --text-secondary:    #B89FCC;
+  --text-tertiary:     #7A6690;
+  --text-price:        #C07DF0;
+
+  --border-subtle:     #2E1A4A;
+  --border-strong:     #4C1D6E;
+  --border-focus:      #7C3EA8;
+
+  --bubble-user-bg:    #4C1D6E;
+  --bubble-user-text:  #FFFFFF;
+  --bubble-agent-bg:   #1A0D2E;
+  --bubble-agent-text: #F0EAF8;
+
+  --card-bg:           #1A0D2E;
+  --card-border:       #2E1A4A;
+  --card-shadow:       0 2px 8px rgba(0,0,0,0.4);
+  --card-shadow-hover: 0 8px 24px rgba(76,29,110,0.4);
+
+  --input-bg:          #221040;
+  --input-border:      #2E1A4A;
+  --input-focus-border:#7C3EA8;
+  --input-focus-shadow:0 0 0 3px rgba(124,62,168,0.2);
 }
 
-/* ─── Base Reset ──────────────────────────────────────────── */
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
+/* ─── Base ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body, #__next {
   height: 100%;
-  overflow: hidden;
   background: var(--bg-page);
   color: var(--text-primary);
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Sinhala font class ──────────────────────────────────── */
-.font-sinhala {
-  font-family: 'Noto Sans Sinhala', 'Inter', sans-serif;
-  line-height: 1.8;  /* Sinhala needs more line height */
-  font-size: 15px;
-}
-
-.font-tamil {
-  font-family: 'Noto Sans Tamil', 'Inter', sans-serif;
-  line-height: 1.8;
-}
-
-/* ─── Scrollbar styling ───────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; }
+/* ─── Scrollbars ─── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: var(--border-subtle);
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 9999px; }
+.scroll-x::-webkit-scrollbar { height: 0; }
 
-/* ─── Horizontal product carousel scrollbar ──────────────── */
-.scroll-x::-webkit-scrollbar { height: 0px; }
+/* ─── Typography ─── */
+.font-sinhala { font-family: 'Noto Sans Sinhala', 'Inter', sans-serif; line-height: 1.85; }
+.font-tamil   { font-family: 'Noto Sans Tamil',   'Inter', sans-serif; line-height: 1.85; }
 
 /* ─── Message bubble link styling ────────────────────────── */
 .agent-bubble a {
-  color: var(--brand-purple);
+  color: var(--k-purple);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-/* ─── Typing cursor blink ────────────────────────────────── */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
-}
+/* ─── Typing cursor ─── */
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 .cursor-blink {
-  display: inline-block;
-  width: 2px;
-  height: 15px;
-  background: var(--brand-purple);
-  border-radius: 1px;
-  margin-left: 2px;
-  vertical-align: middle;
-  animation: blink 0.9s ease-in-out infinite;
+  display: inline-block; width: 2px; height: 15px;
+  background: var(--k-purple); border-radius: 1px;
+  margin-left: 2px; vertical-align: middle;
+  animation: blink 0.85s ease-in-out infinite;
 }
 
-/* ─── Shimmer skeleton animation ─────────────────────────── */
+/* ─── Skeleton shimmer ─── */
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
 }
 .skeleton {
   background: linear-gradient(
@@ -107,9 +138,40 @@ html, body, #__next {
     var(--border-subtle) 50%,
     var(--bg-subtle) 75%
   );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
   border-radius: 6px;
+}
+
+/* ─── Ripple effect (used on all buttons) ─── */
+.ripple-container { position: relative; overflow: hidden; }
+@keyframes ripple-expand {
+  0%   { transform: scale(0); opacity: 0.35; }
+  100% { transform: scale(4); opacity: 0; }
+}
+.ripple-circle {
+  position: absolute;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.5);
+  width: 100px; height: 100px;
+  margin-top: -50px; margin-left: -50px;
+  animation: ripple-expand 0.6s ease-out forwards;
+  pointer-events: none;
+}
+
+/* ─── Shine sweep (used on Pay Now button) ─── */
+@keyframes shine-sweep {
+  0%   { left: -100%; }
+  100% { left: 200%;  }
+}
+.shine-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  animation: shine-sweep 2.5s ease-in-out infinite;
+  pointer-events: none;
 }
 
 /* ─── Smooth scroll for message list ─────────────────────── */
@@ -129,6 +191,6 @@ html, body, #__next {
   position: absolute;
   inset: -4px;
   border-radius: inherit;
-  border: 2px solid var(--brand-yellow);
+  border: 2px solid var(--k-yellow);
   animation: pulse-ring 1.5s ease-out infinite;
 }

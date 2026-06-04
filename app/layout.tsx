@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
+import { CurrencyProvider } from "@/components/providers/CurrencyProvider";
 import { CartProvider } from "@/components/providers/CartProvider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -43,9 +44,11 @@ export default function RootLayout({
       <body className={`${inter.variable} h-full overflow-hidden`}>
         <ThemeProvider>
           <LanguageProvider>
-            <CartProvider>
-              {children}
-            </CartProvider>
+            <CurrencyProvider>
+              <CartProvider>
+                {children}
+              </CartProvider>
+            </CurrencyProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>

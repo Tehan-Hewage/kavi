@@ -30,6 +30,8 @@ export const CHIP_SETS = {
   ],
 };
 
+import ChipButton from "./buttons/ChipButton";
+
 interface SuggestionChipsProps {
   chips: { label: string; icon: string; message: string }[];
   onSelect: (message: string) => void;
@@ -46,31 +48,19 @@ export const SuggestionChips: React.FC<SuggestionChipsProps> = ({
       className="flex gap-2 px-4 py-2 overflow-x-auto scroll-x flex-nowrap md:flex-wrap no-scrollbar"
     >
       {chips.map((chip, i) => (
-        <motion.button
+        <motion.div
           key={chip.label}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: i * 0.04 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => onSelect(chip.message)}
-          className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs md:text-sm font-semibold transition-all whitespace-nowrap"
-          style={{
-            background: "var(--bg-surface)",
-            border:     "1px solid var(--border-subtle)",
-            color:      "var(--text-secondary)",
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--brand-purple)";
-            (e.currentTarget as HTMLElement).style.color       = "var(--brand-purple)";
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.borderColor = "var(--border-subtle)";
-            (e.currentTarget as HTMLElement).style.color       = "var(--text-secondary)";
-          }}
+          className="flex-shrink-0"
         >
-          <span>{chip.icon}</span>
-          <span>{chip.label}</span>
-        </motion.button>
+          <ChipButton
+            icon={chip.icon}
+            label={chip.label}
+            onClick={() => onSelect(chip.message)}
+          />
+        </motion.div>
       ))}
     </motion.div>
   );

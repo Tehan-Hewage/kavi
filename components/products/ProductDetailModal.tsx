@@ -5,8 +5,9 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/components/providers/CartProvider";
 import { useLanguage } from "@/components/providers/LanguageProvider";
-import { ProductDetail } from "@/lib/types";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { X, ShoppingCart, Check, Info } from "lucide-react";
+import { getValidImageUrl } from "@/lib/image-utils";
 
 interface ProductDetailModalProps {
   productId: string | null;
@@ -19,16 +20,19 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 }) => {
   const { addItem } = useCart();
   const { t } = useLanguage();
+  const { currency: activeCurrency, formatPrice } = useCurrency();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedVariant, setSelectedVariant] = useState<{ id: string; name: string; price: number } | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
 
   useEffect(() => {
     if (!productId) {
       setProduct(null);
-      setSelectedVariant(null);
+      setSelectedColor(null);
+      setSelectedSize(null);
       setActiveImageIdx(0);
       return;
     }
@@ -37,14 +41,30 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/product?id=${productId}`);
+        const response = await fetch(`/api/product?id=${productId}&currency=${activeCurrency}`);
         if (!response.ok) {
           throw new Error("Failed to fetch product details");
         }
         const data = await response.json();
         setProduct(data);
-        if (data.variants && data.variants.length > 0) {
-          setSelectedVariant(data.variants[0]);
+        
+        // Auto-select first variant color & size
+        const validVars = (data.variants || []).filter((v: any) => v.name && v.name.trim() !== "");
+        if (validVars.length > 0) {
+          const firstVar = validVars[0];
+          const parts = firstVar.name.split("/").map((s: any) => s.trim());
+          if (parts.length === 2) {
+            setSelectedColor(parts[0]);
+            setSelectedSize(parts[1]);
+          } else {
+            const val = parts[0];
+            const isSize = /^(S|M|L|XL|XXL|XXXL|XS|FS|FREE\s*SIZE|[0-9]+[a-z]*)$/i.test(val);
+            if (isSize) {
+              setSelectedSize(val);
+            } else {
+              setSelectedColor(val);
+            }
+          }
         }
       } catch (err: any) {
         setError(err.message || "Something went wrong");
@@ -54,7 +74,110 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     };
 
     fetchProductDetails();
-  }, [productId]);
+  }, [productId, activeCurrency]);
+
+  // Helper to parse variant names
+  // e.g. "GreyPrinted / M" -> { color: "GreyPrinted", size: "M" }
+  interface ParsedVariant {
+    id: string;
+    name: string;
+    price: number;
+    color?: string;
+    size?: string;
+  }
+
+  const parsedVariants: ParsedVariant[] = (product?.variants || [])
+    .filter((v) => v.name && v.name.trim() !== "")
+    .map((v) => {
+      const parts = v.name.split("/").map((s) => s.trim());
+      if (parts.length === 2) {
+        return { ...v, color: parts[0], size: parts[1] };
+      }
+      const val = parts[0];
+      const isSize = /^(S|M|L|XL|XXL|XXXL|XS|FS|FREE\s*SIZE|[0-9]+[a-z]*)$/i.test(val);
+      if (isSize) {
+        return { ...v, size: val };
+      }
+      return { ...v, color: val };
+    });
+
+  // Extract unique colors and sizes
+  const uniqueColors = Array.from(
+    new Set(parsedVariants.map((v) => v.color).filter(Boolean) as string[])
+  );
+  const uniqueSizes = Array.from(
+    new Set(parsedVariants.map((v) => v.size).filter(Boolean) as string[])
+  );
+
+  const getSelectedVariant = (): ParsedVariant | null => {
+    if (parsedVariants.length === 0) return null;
+    
+    // Attempt exact match on both color and size
+    let match = parsedVariants.find(
+      (v) => v.color === selectedColor && v.size === selectedSize
+    );
+    if (match) return match;
+
+    // Fallback: match color
+    if (selectedColor) {
+      match = parsedVariants.find((v) => v.color === selectedColor);
+      if (match) return match;
+    }
+
+    // Fallback: match size
+    if (selectedSize) {
+      match = parsedVariants.find((v) => v.size === selectedSize);
+      if (match) return match;
+    }
+
+    return parsedVariants[0];
+  };
+
+  const selectedVariant = getSelectedVariant();
+
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+    const match = parsedVariants.find((v) => v.color === color && v.size === selectedSize);
+    if (!match) {
+      const firstAvailableForColor = parsedVariants.find((v) => v.color === color);
+      if (firstAvailableForColor) {
+        setSelectedSize(firstAvailableForColor.size || null);
+      }
+    }
+  };
+
+  const handleSizeSelect = (size: string) => {
+    setSelectedSize(size);
+    const match = parsedVariants.find((v) => v.color === selectedColor && v.size === size);
+    if (!match) {
+      const firstAvailableForSize = parsedVariants.find((v) => v.size === size);
+      if (firstAvailableForSize) {
+        setSelectedColor(firstAvailableForSize.color || null);
+      }
+    }
+  };
+
+  const getColorHex = (colorName: string): string | null => {
+    const name = colorName.toLowerCase().replace(/\s+/g, "");
+    if (name.includes("blue"))   return "#007cff";
+    if (name.includes("grey") || name.includes("gray")) return "#6b7280";
+    if (name.includes("red"))    return "#ef4444";
+    if (name.includes("black"))  return "#111827";
+    if (name.includes("white"))  return "#ffffff";
+    if (name.includes("yellow")) return "#f59e0b";
+    if (name.includes("green"))  return "#10b981";
+    if (name.includes("purple")) return "#8b5cf6";
+    if (name.includes("pink"))   return "#ec4899";
+    if (name.includes("orange")) return "#f97316";
+    if (name.includes("brown"))  return "#78350f";
+    if (name.includes("gold"))   return "#d4a017";
+    if (name.includes("silver")) return "#c0c0c0";
+    if (name.includes("cream") || name.includes("beige")) return "#f5f0e8";
+    // Not a recognisable colour — return null so the caller renders a text chip
+    return null;
+  };
+
+  const isRealColor = (colorName: string) => getColorHex(colorName) !== null;
 
   if (!productId) return null;
 
@@ -78,14 +201,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     ? (product.category as any).name || (product.category as any).id || ""
     : product?.category || "";
   
-  const formattedPrice = new Intl.NumberFormat("en-LK", {
-    style: "currency",
-    currency: "LKR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-    .format(currentPrice)
-    .replace("LKR", "Rs");
+  const formattedPrice = formatPrice(currentPrice);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -119,7 +235,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0.5 }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="relative bg-white dark:bg-gray-900 w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl z-10 flex flex-col max-h-[85vh] sm:max-h-[80vh] overflow-hidden"
+          className="relative bg-white dark:bg-gray-900 w-full sm:max-w-5xl rounded-t-3xl sm:rounded-3xl shadow-2xl z-10 flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden"
         >
           {/* Header */}
           <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 dark:border-gray-800">
@@ -156,7 +272,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <div className="space-y-3">
                   <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
                     <Image
-                      src={product.images?.[activeImageIdx] || "/placeholder.png"}
+                      src={getValidImageUrl(product.images?.[activeImageIdx])}
                       alt={product.name}
                       fill
                       className="object-cover"
@@ -175,7 +291,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                               : "border-transparent opacity-70 hover:opacity-100"
                           }`}
                         >
-                          <Image src={img} alt="" fill className="object-cover" />
+                          <Image src={getValidImageUrl(img)} alt="" fill className="object-cover" />
                         </button>
                       ))}
                     </div>
@@ -196,30 +312,123 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     </p>
                   </div>
 
-                  {/* Variants */}
-                  {product.variants && product.variants.length > 0 && (
+                  {/* Color / Variant Selector */}
+                  {uniqueColors.length > 0 && (
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Select Variant:
+                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">
+                        {uniqueColors.some(isRealColor) ? "Color:" : "Option:"}
                       </label>
                       <div className="flex flex-wrap gap-2">
-                        {product.variants.map((v) => {
-                          const isSelected = selectedVariant?.id === v.id;
+                        {uniqueColors.map((color) => {
+                          const isSelected = selectedColor === color;
+                          const colorHex = getColorHex(color);
+                          const isWhite = colorHex?.toLowerCase() === "#ffffff";
+
+                          if (colorHex) {
+                            // True colour — render a swatch circle
+                            return (
+                              <button
+                                key={color}
+                                onClick={() => handleColorSelect(color)}
+                                className={`w-10 h-10 rounded-xl transition-all duration-200 relative ${
+                                  isSelected
+                                    ? "scale-110 shadow-lg"
+                                    : "opacity-80 hover:opacity-100 hover:scale-105"
+                                }`}
+                                style={{
+                                  backgroundColor: colorHex,
+                                  border: isSelected
+                                    ? "3px solid #4C1D6E"
+                                    : isWhite
+                                      ? "1.5px solid var(--border-strong)"
+                                      : "1.5px solid transparent",
+                                  boxShadow: isSelected
+                                    ? "0 4px 14px rgba(76, 29, 110, 0.45)"
+                                    : "none",
+                                }}
+                                title={color}
+                              >
+                                {isSelected && (
+                                  <span
+                                    className="absolute inset-0 flex items-center justify-center text-xs font-black"
+                                    style={{
+                                      color: isWhite ? "#000000" : "#ffffff",
+                                      textShadow: isWhite ? "none" : "0 1px 2px rgba(0,0,0,0.5)",
+                                    }}
+                                  >
+                                    ✓
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          } else {
+                            // Not a colour — render as a text chip (same as size selector)
+                            return (
+                              <button
+                                key={color}
+                                onClick={() => handleColorSelect(color)}
+                                className={`h-10 px-4 text-xs font-bold rounded-xl border transition-all duration-200 flex items-center justify-center ${
+                                  isSelected
+                                    ? "bg-kapruka-purple border-kapruka-purple text-white shadow-md shadow-kapruka-purple/15"
+                                    : "bg-purple-50/40 border-purple-100/50 dark:bg-gray-800 dark:border-gray-700 text-gray-850 dark:text-gray-200 hover:border-kapruka-purple/35"
+                                }`}
+                                style={
+                                  isSelected
+                                    ? { background: "#4C1D6E", borderColor: "#4C1D6E", color: "#FFFFFF" }
+                                    : {}
+                                }
+                              >
+                                {color}
+                              </button>
+                            );
+                          }
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Size Selector */}
+                  {(uniqueSizes.length > 0 || (parsedVariants.length > 0 && uniqueColors.length === 0)) && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">
+                        Size / Option:
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {(uniqueSizes.length > 0 ? uniqueSizes : parsedVariants.map(v => v.name)).map((size) => {
+                          const isSelected = selectedSize === size || (uniqueColors.length === 0 && selectedVariant?.name === size);
+                          
+                          // Check if size is available for currently selected color
+                          const isAvailableForColor = uniqueColors.length === 0 || parsedVariants.some(
+                            (v) => v.size === size && v.color === selectedColor
+                          );
+
                           return (
                             <button
-                              key={v.id}
-                              onClick={() => setSelectedVariant(v)}
-                              className={`px-3 py-2 text-xs font-semibold rounded-xl border transition-all flex items-center gap-1.5 ${
+                              key={size}
+                              onClick={() => {
+                                if (uniqueColors.length > 0) {
+                                  handleSizeSelect(size);
+                                } else {
+                                  const matchingVar = parsedVariants.find(v => v.name === size);
+                                  if (matchingVar) {
+                                    setSelectedSize(matchingVar.size || null);
+                                  }
+                                }
+                              }}
+                              className={`h-10 px-4 text-xs font-bold rounded-xl border transition-all duration-200 flex items-center justify-center ${
                                 isSelected
-                                  ? "bg-kapruka-purple border-kapruka-purple text-white shadow-md shadow-kapruka-purple/10 scale-102"
-                                  : "bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
+                                  ? "bg-kapruka-purple border-kapruka-purple text-white shadow-md shadow-kapruka-purple/15 scale-102"
+                                  : isAvailableForColor
+                                    ? "bg-purple-50/40 border-purple-100/50 dark:bg-gray-800 dark:border-gray-700 text-gray-850 dark:text-gray-200 hover:border-kapruka-purple/35"
+                                    : "bg-gray-50 border-gray-100 text-gray-300 dark:bg-gray-900 dark:border-gray-800 dark:text-gray-600 cursor-not-allowed opacity-45"
                               }`}
+                              style={
+                                isSelected
+                                  ? { background: "#4C1D6E", borderColor: "#4C1D6E", color: "#FFFFFF" }
+                                  : {}
+                              }
                             >
-                              {isSelected && <Check className="w-3.5 h-3.5" />}
-                              <span>{v.name}</span>
-                              <span className={`ml-1 opacity-70 ${isSelected ? "text-white" : "text-gray-500"}`}>
-                                (Rs {getPriceVal(v.price).toLocaleString()})
-                              </span>
+                              {size}
                             </button>
                           );
                         })}

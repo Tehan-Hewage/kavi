@@ -2,10 +2,12 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ShoppingBag } from "lucide-react";
+import { X, ShoppingCart, ShoppingBag } from "lucide-react";
 import { useCart } from "@/components/providers/CartProvider";
-import { useLanguage } from "@/components/providers/LanguageProvider";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
 import CartItem from "./CartItem";
+import { YellowButton } from "@/components/ui/buttons/YellowButton";
+import { IconButton } from "@/components/ui/buttons/IconButton";
 
 const drawerVariants = {
   closed: { x: "100%", transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
@@ -29,9 +31,9 @@ export default function CartDrawer({
   onProceedToCheckout,
 }: CartDrawerProps) {
   const { cart: items, cartSubtotal: total } = useCart();
-  const { language } = useLanguage();
+  const { formatPrice } = useCurrency();
   
-  // Flat rate LKR delivery fee
+  // Delivery fee is always LKR 350 — formatPrice converts it for display
   const deliveryFee = items.length > 0 ? 350 : 0;
 
   return (
@@ -64,16 +66,17 @@ export default function CartDrawer({
             }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border-subtle)" }}>
+            <div
+              className="flex items-center justify-between px-5 py-4"
+              style={{ background: "#4C1D6E" }}
+            >
               <div className="flex items-center gap-2">
-                <ShoppingBag size={18} style={{ color: "var(--brand-purple)" }} />
-                <h2 className="font-bold text-sm md:text-base" style={{ color: "var(--text-primary)" }}>
+                <ShoppingCart size={18} className="text-white" />
+                <h2 className="font-bold text-base text-white">
                   Your Cart ({items.length})
                 </h2>
               </div>
-              <button onClick={onClose} className="p-1 rounded-lg hover:bg-[var(--bg-subtle)] transition-colors">
-                <X size={18} style={{ color: "var(--text-secondary)" }} />
-              </button>
+              <IconButton icon={<X size={18} />} onClick={onClose} label="Close cart" />
             </div>
 
             {/* Items */}
@@ -99,33 +102,32 @@ export default function CartDrawer({
                 <div className="flex flex-col gap-2 text-sm font-semibold">
                   <div className="flex justify-between">
                     <span style={{ color: "var(--text-secondary)" }}>Subtotal</span>
-                    <span style={{ color: "var(--text-primary)" }}>Rs {total.toLocaleString("en-LK")}</span>
+                    <span style={{ color: "var(--text-primary)" }}>{formatPrice(total)}</span>
                   </div>
                   {deliveryFee > 0 && (
                     <div className="flex justify-between">
                       <span style={{ color: "var(--text-secondary)" }}>Delivery</span>
-                      <span style={{ color: "var(--text-primary)" }}>Rs {deliveryFee.toLocaleString("en-LK")}</span>
+                      <span style={{ color: "var(--text-primary)" }}>{formatPrice(deliveryFee)}</span>
                     </div>
                   )}
                   <div className="flex justify-between pt-2 border-t font-extrabold text-base" style={{ borderColor: "var(--border-subtle)" }}>
                     <span style={{ color: "var(--text-primary)" }}>Total</span>
-                    <span style={{ color: "var(--brand-purple)" }}>
-                      Rs {(total + deliveryFee).toLocaleString("en-LK")}
+                    <span style={{ color: "#4C1D6E" }}>
+                      {formatPrice(total + deliveryFee)}
                     </span>
                   </div>
                 </div>
 
-                <motion.button
-                  whileTap={{ scale: 0.98 }}
+                <YellowButton
+                  size="lg"
+                  fullWidth
                   onClick={() => {
                     onClose();
                     onProceedToCheckout?.();
                   }}
-                  className="w-full py-3.5 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2"
-                  style={{ background: "var(--brand-purple)" }}
                 >
                   Proceed to Checkout →
-                </motion.button>
+                </YellowButton>
               </div>
             )}
           </motion.div>

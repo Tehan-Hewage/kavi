@@ -4,7 +4,10 @@ import React from "react";
 import Image from "next/image";
 import { CartItem as CartItemType } from "@/lib/types";
 import { useCart } from "@/components/providers/CartProvider";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { useCurrency } from "@/components/providers/CurrencyProvider";
+import { Trash2 } from "lucide-react";
+
+import { getValidImageUrl } from "@/lib/image-utils";
 
 interface CartItemProps {
   item: CartItemType;
@@ -12,21 +15,15 @@ interface CartItemProps {
 
 export const CartItem: React.FC<CartItemProps> = ({ item }) => {
   const { updateQuantity, removeItem } = useCart();
+  const { formatPrice } = useCurrency();
 
-  const formattedPrice = new Intl.NumberFormat("en-LK", {
-    style: "currency",
-    currency: "LKR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-    .format(item.price)
-    .replace("LKR", "Rs");
+  const formattedPrice = formatPrice(item.price);
 
   return (
     <div className="flex gap-3 py-3 border-b border-gray-100 dark:border-gray-800/80 items-center justify-between">
       {/* Product Image */}
       <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800 flex-shrink-0 border border-gray-100 dark:border-gray-700">
-        <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+        <Image src={getValidImageUrl(item.image_url)} alt={item.name} fill className="object-cover" />
       </div>
 
       {/* Item info */}
@@ -35,38 +32,56 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
           {item.name}
         </h6>
         {item.variant_name && (
-          <span className="inline-block text-[10px] font-bold text-kapruka-purple bg-kapruka-purple/5 px-1.5 py-0.5 rounded-md mt-0.5">
+          <span className="inline-block text-[10px] font-bold text-[#4C1D6E] bg-[#4C1D6E]/10 px-1.5 py-0.5 rounded-md mt-0.5">
             {item.variant_name}
           </span>
         )}
-        <p className="text-xs font-black text-gray-900 dark:text-white mt-1">
+        <p className="text-xs font-black mt-1" style={{ color: "#4C1D6E" }}>
           {formattedPrice}
         </p>
       </div>
 
       {/* Quantity & Delete Controls */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => updateQuantity(item.id, item.quantity - 1, item.variant_id)}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-900 transition-colors"
+            className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer"
+            style={{ borderColor: "#4C1D6E", color: "#4C1D6E", background: "transparent" }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.background = "#4C1D6E";
+              (e.currentTarget as HTMLElement).style.color      = "#FFFFFF";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.background = "transparent";
+              (e.currentTarget as HTMLElement).style.color      = "#4C1D6E";
+            }}
           >
-            <Minus className="w-3.5 h-3.5" />
+            −
           </button>
-          <span className="w-8 text-center text-xs font-extrabold text-gray-800 dark:text-white">
+          <span data-testid="qty-display" className="text-sm font-semibold w-6 text-center text-gray-800 dark:text-gray-200">
             {item.quantity}
           </span>
           <button
             onClick={() => updateQuantity(item.id, item.quantity + 1, item.variant_id)}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-900 transition-colors"
+            className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-sm font-bold transition-colors cursor-pointer"
+            style={{ borderColor: "#4C1D6E", color: "#4C1D6E", background: "transparent" }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.background = "#4C1D6E";
+              (e.currentTarget as HTMLElement).style.color      = "#FFFFFF";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.background = "transparent";
+              (e.currentTarget as HTMLElement).style.color      = "#4C1D6E";
+            }}
           >
-            <Plus className="w-3.5 h-3.5" />
+            +
           </button>
         </div>
 
         <button
           onClick={() => removeItem(item.id, item.variant_id)}
-          className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-gray-400 hover:text-rose-600 rounded-lg transition-colors"
+          className="p-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-gray-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
           title="Remove item"
         >
           <Trash2 className="w-4 h-4" />

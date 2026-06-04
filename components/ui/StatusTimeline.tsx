@@ -49,7 +49,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
           </p>
         )}
         {estimatedDelivery && (
-          <p className="text-xs text-kapruka-purple dark:text-purple-300 font-medium mt-1">
+          <p className="text-xs text-[#4C1D6E] dark:text-purple-300 font-semibold mt-1">
             Est. Delivery: {new Date(estimatedDelivery).toLocaleDateString("en-US", {
               weekday: "long",
               year: "numeric",
@@ -60,7 +60,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
         )}
       </div>
 
-      <div className="space-y-6 relative before:absolute before:left-5 before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-100 dark:before:bg-gray-700">
+      <div className="space-y-6 relative">
         {isCancelled ? (
           <div className="flex gap-4 items-start relative z-10">
             <div className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400">
@@ -90,28 +90,48 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.1, duration: 0.3 }}
-                className="flex gap-4 items-start relative z-10"
+                className="flex gap-4 items-start relative"
               >
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                    isActive
-                      ? "bg-kapruka-purple border-kapruka-purple text-white shadow-lg shadow-kapruka-purple/20 scale-110"
-                      : isCompleted
-                      ? "bg-purple-50 border-kapruka-purple text-kapruka-purple dark:bg-purple-950/20 dark:border-purple-400 dark:text-purple-400"
-                      : "bg-white border-gray-200 text-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-600"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
+                {/* Connecting Line Segment */}
+                {idx < statuses.length - 1 && (
+                  <div
+                    className="absolute left-5 top-10 bottom-[-24px] w-[2px]"
+                    style={{ background: idx < currentIndex ? "#4C1D6E" : "#EBEBEB" }}
+                  />
+                )}
+
+                {/* Dot Container */}
+                <div className="relative flex-shrink-0">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 relative z-10 ${
+                      isActive ? "scale-110" : ""
+                    }`}
+                    style={
+                      isCompleted
+                        ? { background: "#4C1D6E", borderColor: "#4C1D6E", color: "#FFFFFF" }
+                        : { background: "transparent", borderColor: "#EBEBEB", color: "var(--text-tertiary)" }
+                    }
+                  >
+                    <Icon className="w-5 h-5" />
+                  </div>
+
+                  {/* Active dot pulse ring */}
+                  {isActive && (
+                    <motion.div
+                      className="absolute inset-[-5px] rounded-full border-2 z-0"
+                      style={{ borderColor: "#FFC700" }}
+                      animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                  )}
                 </div>
+
                 <div className="flex-1 min-w-0">
                   <p
-                    className={`text-sm font-bold transition-colors ${
-                      isActive
-                        ? "text-kapruka-purple dark:text-purple-300"
-                        : isCompleted
-                        ? "text-gray-900 dark:text-gray-100"
-                        : "text-gray-400 dark:text-gray-600"
-                    }`}
+                    className="text-sm font-bold transition-colors"
+                    style={{
+                      color: isActive ? "#4C1D6E" : isCompleted ? "var(--text-primary)" : "var(--text-tertiary)"
+                    }}
                   >
                     {item.label}
                   </p>

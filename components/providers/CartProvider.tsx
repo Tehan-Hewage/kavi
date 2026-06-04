@@ -3,6 +3,10 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { CartItem } from "@/lib/types";
 
+// IMPORTANT: Cart always stores prices in LKR (the base currency).
+// Never mutate prices on currency change — use formatPrice() from
+// CurrencyProvider at display time to convert for the current currency.
+
 interface CartContextProps {
   cart: CartItem[];
   addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
@@ -10,6 +14,7 @@ interface CartContextProps {
   updateQuantity: (id: string, qty: number, variantId?: string) => void;
   clearCart: () => void;
   cartCount: number;
+  /** Raw LKR subtotal — pass through formatPrice() before displaying */
   cartSubtotal: number;
 }
 
@@ -70,6 +75,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  // Always sum raw LKR prices — formatPrice() handles conversion at display time
   const cartSubtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   return (

@@ -2,8 +2,8 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
-import { ArrowUp, Loader2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowUp } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ChatInputProps {
   onSend: (text: string) => void;
@@ -43,18 +43,29 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const isEmpty = !value.trim();
+  const canSend = !isEmpty && !disabled;
+  const isLoading = disabled;
 
   return (
     <div
-      className="flex items-end gap-2 p-3 border shadow-sm transition-shadow duration-200"
+      className="flex items-center gap-2 p-3 border shadow-sm transition-all duration-200"
       style={{
         background:   "var(--bg-surface)",
-        borderColor:  "var(--border-subtle)",
+        borderColor:  "var(--input-border)",
         borderRadius: "20px",
       }}
       onFocus={() => {
         if (textareaRef.current) {
-          textareaRef.current.parentElement!.style.borderColor = "var(--border-strong)";
+          const el = textareaRef.current.parentElement!;
+          el.style.borderColor = "var(--input-focus-border)";
+          el.style.boxShadow = "var(--input-focus-shadow)";
+        }
+      }}
+      onBlur={() => {
+        if (textareaRef.current) {
+          const el = textareaRef.current.parentElement!;
+          el.style.borderColor = "var(--input-border)";
+          el.style.boxShadow = "none";
         }
       }}
     >
@@ -71,28 +82,41 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           color: "var(--text-primary)",
         }}
       />
-      <button
+      <motion.button
+        whileHover={canSend ? {
+          scale:     1.08,
+          boxShadow: "0 4px 16px rgba(76,29,110,0.4)",
+        } : {}}
+        whileTap={canSend ? { scale: 0.9 } : {}}
+        animate={canSend ? {
+          background: ["#4C1D6E", "#6B2D96", "#4C1D6E"],
+        } : { background: "#D6D6D6" }}
+        transition={canSend
+          ? { background: { duration: 3, repeat: Infinity } }
+          : { duration: 0.2 }
+        }
         onClick={handleSubmit}
-        disabled={isEmpty || disabled}
-        className="p-2.5 text-white rounded-full shadow-sm transition-all duration-150 flex items-center justify-center flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-        style={{
-          background: "var(--brand-purple)",
-        }}
-        onMouseEnter={e => {
-          if (!isEmpty && !disabled) {
-            e.currentTarget.style.background = "var(--brand-purple-dark)";
-          }
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.background = "var(--brand-purple)";
-        }}
+        disabled={!canSend}
+        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center disabled:cursor-not-allowed"
       >
-        {disabled ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <ArrowUp className="w-4 h-4" />
-        )}
-      </button>
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div key="spinner"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
+              className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+            />
+          ) : (
+            <motion.div key="arrow"
+              initial={{ y: 4, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{    y: -4, opacity: 0 }}
+            >
+              <ArrowUp size={18} className="text-white" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
     </div>
   );
 };

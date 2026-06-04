@@ -4,7 +4,7 @@ import React from "react";
 
 interface LoadingSkeletonProps {
   count?: number;
-  layout?: "grid" | "carousel";
+  layout?: "grid" | "carousel" | "message" | "chips";
 }
 
 export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
@@ -15,26 +15,70 @@ export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
 
   if (layout === "carousel") {
     return (
-      <div className="flex gap-4 overflow-hidden py-3 -mx-4 md:mx-0 w-full">
+      <div className="flex gap-3 overflow-hidden py-2 -mx-4 md:mx-0 w-full">
         {items.map((_, idx) => (
           <div
             key={idx}
-            className="flex-shrink-0 w-[180px] md:w-[220px] bg-white dark:bg-gray-800 rounded-2xl p-3 border border-gray-100 dark:border-gray-700/60 shadow-sm animate-pulse"
+            className="flex-shrink-0 flex flex-col overflow-hidden"
+            style={{
+              width:        "168px",
+              borderRadius: "12px",
+              background:   "var(--card-bg)",
+              border:       "1px solid var(--card-border)",
+              boxShadow:    "var(--card-shadow)",
+            }}
           >
-            {/* Image Skeleton */}
-            <div className="h-28 md:h-36 bg-gray-200 dark:bg-gray-700 rounded-xl mb-3" />
-            {/* Category Skeleton */}
-            <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
-            {/* Title Skeleton */}
-            <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-1.5" />
-            <div className="h-4 w-2/3 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
-            {/* Price & Button Skeleton */}
-            <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-50 dark:border-gray-700/50">
-              <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
-              <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+            {/* Image Shimmer */}
+            <div className="relative w-full h-[168px] bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center">
+              <div className="skeleton w-full h-full rounded-t-xl" />
+              {/* Category Badge Shimmer */}
+              <div className="skeleton absolute top-2 left-2 h-4 w-12 rounded-full" />
+            </div>
+            {/* Body Shimmer */}
+            <div className="flex flex-col gap-2.5 p-3 flex-1 justify-between">
+              <div className="space-y-2">
+                {/* Title Line 1 */}
+                <div className="skeleton h-3 w-full" />
+                {/* Title Line 2 */}
+                <div className="skeleton h-3 w-3/4" />
+                {/* Rating Shimmer */}
+                <div className="skeleton h-2.5 w-16" />
+                {/* Price Shimmer */}
+                <div className="skeleton h-4.5 w-20 mt-1" />
+              </div>
+              {/* Button Shimmer */}
+              <div className="skeleton h-8 w-full rounded-lg mt-1" />
             </div>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (layout === "chips") {
+    // Render horizontal chips skeleton
+    const chipWidths = ["w-20", "w-28", "w-24", "w-16", "w-32"];
+    return (
+      <div className="flex gap-2 overflow-hidden py-1 w-full flex-nowrap">
+        {items.map((_, idx) => {
+          const widthClass = chipWidths[idx % chipWidths.length];
+          return (
+            <div
+              key={idx}
+              className={`skeleton flex-shrink-0 h-8 ${widthClass} rounded-full`}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (layout === "message") {
+    return (
+      <div className="space-y-2 w-full">
+        <div className="skeleton h-3 w-full" />
+        <div className="skeleton h-3 w-[90%]" />
+        <div className="skeleton h-3 w-[65%]" />
       </div>
     );
   }
@@ -44,19 +88,28 @@ export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
       {items.map((_, idx) => (
         <div
           key={idx}
-          className="bg-white dark:bg-gray-800 rounded-2xl p-3 border border-gray-100 dark:border-gray-700/60 shadow-sm animate-pulse"
+          className="flex flex-col overflow-hidden"
+          style={{
+            borderRadius: "12px",
+            background:   "var(--card-bg)",
+            border:       "1px solid var(--card-border)",
+            boxShadow:    "var(--card-shadow)",
+          }}
         >
-          <div className="aspect-square bg-gray-200 dark:bg-gray-700 rounded-xl mb-3" />
-          <div className="h-3 w-12 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
-          <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-1.5" />
-          <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
-          <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-50 dark:border-gray-700/50">
-            <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
-            <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+          <div className="relative aspect-square">
+            <div className="skeleton w-full h-full rounded-t-xl" />
+          </div>
+          <div className="p-3 space-y-2">
+            <div className="skeleton h-3 w-16" />
+            <div className="skeleton h-3.5 w-full" />
+            <div className="skeleton h-3.5 w-2/3" />
+            <div className="skeleton h-4 w-12" />
+            <div className="skeleton h-8 w-full rounded-lg mt-1" />
           </div>
         </div>
       ))}
     </div>
   );
 };
+
 export default LoadingSkeleton;
