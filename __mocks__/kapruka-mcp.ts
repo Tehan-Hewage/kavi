@@ -1,5 +1,5 @@
 import { setupServer } from "msw/node";
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, passthrough } from "msw";
 import {
   makeProductList,
   makeProduct,
@@ -157,7 +157,7 @@ export const errorHandlers = {
         }
       });
     }
-    return HttpResponse.passthrough();
+    return passthrough();
   }),
 };
 

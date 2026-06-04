@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // ESLint 9 is incompatible with Next.js 14's built-in lint runner (which
+  // uses removed ESLint 8 flags). Skip during build; run `npm run lint` separately.
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {
@@ -28,9 +33,7 @@ const nextConfig = {
       }
     ]
   },
-  experimental: {
-    serverComponentsExternalPackages: ["@modelcontextprotocol/sdk"]
-  }
+  serverExternalPackages: ["@modelcontextprotocol/sdk"],
 };
 
 export default nextConfig;

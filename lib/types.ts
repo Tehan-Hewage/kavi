@@ -18,6 +18,10 @@ export interface Product {
   category: string;
   url: string;
   description?: string;
+  rating?: number | string;
+  review_count?: number;
+  in_stock?: boolean;
+  available?: boolean;
 }
 
 export interface Category {

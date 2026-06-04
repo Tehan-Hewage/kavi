@@ -8,6 +8,7 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { X, ShoppingCart, Check, Info } from "lucide-react";
 import { getValidImageUrl } from "@/lib/image-utils";
+import { ProductDetail } from "@/lib/types";
 
 interface ProductDetailModalProps {
   productId: string | null;
