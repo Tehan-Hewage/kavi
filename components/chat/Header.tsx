@@ -16,41 +16,37 @@ interface HeaderProps {
 export default function Header({ cartCount, onOpenCart }: HeaderProps) {
   return (
     <header
-      className="flex-shrink-0 flex items-center justify-between px-4 md:px-6 h-16 z-50"
+      className="flex-shrink-0 flex items-center justify-between px-3 sm:px-6 h-14 sm:h-16 z-50"
       style={{
         background:   "#4C1D6E",
         borderBottom: "1px solid rgba(255,255,255,0.12)",
         boxShadow:    "0 2px 12px rgba(0,0,0,0.2)",
       }}
     >
-      {/* LEFT — Logo + Kavi brand */}
-      <div className="flex items-center gap-3">
-        {/* Send Online logo */}
+      {/* LEFT — Logo */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <Image
           src="/send-online-logo.png"
           alt="Send Online"
-          height={32}
-          width={140}
+          height={28}
+          width={120}
           className="flex-shrink-0 object-contain"
-          style={{ height: "32px", width: "auto" }}
+          style={{ height: "28px", width: "auto", maxWidth: "110px" }}
           priority
         />
 
-        {/* Divider */}
+        {/* Divider + Kavi brand — desktop only */}
         <div className="hidden sm:block w-px h-6 bg-white/20" />
-
-        {/* Kavi pill */}
         <div className="hidden sm:flex items-center gap-2">
           <motion.div
             animate={{ scale: [1, 1.08, 1] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="w-8 h-8 rounded-full flex items-center justify-center
-                       text-white text-sm font-bold"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
             style={{ background: "rgba(255,255,255,0.2)" }}
           >
             K
           </motion.div>
-          <div className="hidden sm:block leading-none">
+          <div className="leading-none">
             <p className="text-white text-sm font-semibold tracking-wide">Kavi</p>
             <p className="text-white/60 text-xs">AI Shopping Assistant</p>
           </div>
@@ -58,12 +54,21 @@ export default function Header({ cartCount, onOpenCart }: HeaderProps) {
       </div>
 
       {/* RIGHT — Controls */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+        {/* Language: dropdown on mobile, pill on desktop */}
         <LanguagePill />
+
+        {/* Currency: always dropdown, flag-only on mobile */}
         <CurrencyPill />
-        <ThemeToggle />
+
+        {/* Theme toggle — hidden on mobile to save space */}
+        <div className="hidden sm:block">
+          <ThemeToggle />
+        </div>
+
+        {/* Cart */}
         <IconButton
-          icon={<ShoppingCart size={20} />}
+          icon={<ShoppingCart size={18} />}
           badge={cartCount}
           onClick={onOpenCart}
           label="Open cart"
@@ -72,4 +77,3 @@ export default function Header({ cartCount, onOpenCart }: HeaderProps) {
     </header>
   );
 }
-
