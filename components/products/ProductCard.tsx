@@ -107,7 +107,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
 
           {/* Price */}
-          <p className="text-sm font-bold" style={{ color: "#4C1D6E" }}>
+          <p className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>
             {formatPrice(priceVal)}
           </p>
         </div>

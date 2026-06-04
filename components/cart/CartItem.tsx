@@ -36,7 +36,7 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
             {item.variant_name}
           </span>
         )}
-        <p className="text-xs font-black mt-1" style={{ color: "#4C1D6E" }}>
+        <p className="text-xs font-black mt-1" style={{ color: "var(--text-primary)" }}>
           {formattedPrice}
         </p>
       </div>

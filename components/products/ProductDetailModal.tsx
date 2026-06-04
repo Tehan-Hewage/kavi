@@ -298,8 +298,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   )}
                 </div>
 
-                {/* Info & Variants */}
-                <div className="flex flex-col justify-between space-y-4">
+                {/* Info & Variants — scrollable region */}
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 overflow-y-auto space-y-4 pr-1">
                   <div>
                     <span className="px-2.5 py-1 bg-kapruka-purple/10 text-kapruka-purple dark:bg-kapruka-purple/20 dark:text-purple-300 rounded-full text-xs font-bold uppercase tracking-wider">
                       {categoryName}
@@ -460,15 +461,24 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     </p>
                   </div>
 
-                  {/* CTA */}
-                  <button
-                    disabled={!isAvailable}
-                    onClick={handleAddToCart}
-                    className="w-full mt-4 py-3 px-4 bg-kapruka-purple hover:bg-kapruka-purple-dark disabled:bg-gray-200 disabled:dark:bg-gray-800 disabled:text-gray-400 disabled:dark:text-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-bold shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-                  >
-                    <ShoppingCart className="w-4 h-4" />
-                    <span>{t.addToCart}</span>
-                  </button>
+                  </div>{/* end scrollable */}
+
+                  {/* CTA — always visible at bottom */}
+                  <div className="pt-4 border-t border-gray-100 dark:border-gray-700 mt-4 flex-shrink-0">
+                    <button
+                      disabled={!isAvailable}
+                      onClick={handleAddToCart}
+                      className="w-full py-3.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+                      style={{
+                        background: isAvailable ? "#FFC700" : "#e5e7eb",
+                        color:      isAvailable ? "#1a0a00"  : "#9ca3af",
+                        cursor:     isAvailable ? "pointer"  : "not-allowed",
+                      }}
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      <span>{t.addToCart}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

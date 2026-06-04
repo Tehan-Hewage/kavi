@@ -112,7 +112,7 @@ export default function CartDrawer({
                   )}
                   <div className="flex justify-between pt-2 border-t font-extrabold text-base" style={{ borderColor: "var(--border-subtle)" }}>
                     <span style={{ color: "var(--text-primary)" }}>Total</span>
-                    <span style={{ color: "#4C1D6E" }}>
+                    <span style={{ color: "var(--text-primary)" }}>
                       {formatPrice(total + deliveryFee)}
                     </span>
                   </div>
