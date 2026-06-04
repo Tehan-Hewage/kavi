@@ -10,13 +10,19 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || "dumm
 const KAPRUKA_TOOLS: Anthropic.Tool[] = [
   {
     name: "kapruka_search_products",
-    description: "Search for products on Kapruka.com by keyword q, with optional category filter. Returns matching products with prices, images, and IDs.",
+    description: "Search the live Kapruka catalog. IMPORTANT: When the user states a budget, ALWAYS pass min_price and max_price. Example: budget \"8k-10k\" → min_price: 8000, max_price: 10000",
     input_schema: {
       type: "object",
       properties: {
-        q: { type: "string", description: "Search query, e.g. 'birthday cake' or 'roses' or 'tea gift'. Min 3 characters." },
-        category: { type: "string", description: "Optional category filter name (e.g. 'Birthday', 'Cakes', 'Flowers'). Case-insensitive." },
-        limit: { type: "number", description: "Max results to return (1-50, default 10)" }
+        q:            { type: "string",  description: "Search keyword" },
+        category:     { type: "string",  description: "Category slug" },
+        min_price:    { type: "number",  description: "Minimum price in LKR — use when user gives a budget" },
+        max_price:    { type: "number",  description: "Maximum price in LKR — use when user gives a budget" },
+        in_stock_only:{ type: "boolean", description: "Only show available items" },
+        sort:         { type: "string",  description: "price_asc | price_desc | popular" },
+        limit:        { type: "number",  description: "Results per page, max 20" },
+        cursor:       { type: "string",  description: "Pagination cursor" },
+        currency:     { type: "string",  description: "LKR (default)" },
       },
       required: ["q"]
     }
@@ -133,13 +139,19 @@ const KAPRUKA_TOOLS: Anthropic.Tool[] = [
 const GEMINI_TOOLS = [
   {
     name: "kapruka_search_products",
-    description: "Search for products on Kapruka.com by keyword q, with optional category filter. Returns matching products with prices, images, and IDs.",
+    description: "Search the live Kapruka catalog. IMPORTANT: When the user states a budget, ALWAYS pass min_price and max_price. Example: budget \"8k-10k\" → min_price: 8000, max_price: 10000",
     parameters: {
       type: "OBJECT",
       properties: {
-        q: { type: "STRING", description: "Search query, e.g. 'birthday cake' or 'roses' or 'tea gift'. Min 3 characters." },
-        category: { type: "STRING", description: "Optional category filter name (e.g. 'Birthday', 'Cakes', 'Flowers'). Case-insensitive." },
-        limit: { type: "NUMBER", description: "Max results to return (1-50, default 10)" }
+        q:            { type: "STRING",  description: "Search keyword" },
+        category:     { type: "STRING",  description: "Category slug" },
+        min_price:    { type: "NUMBER",  description: "Minimum price in LKR — use when user gives a budget" },
+        max_price:    { type: "NUMBER",  description: "Maximum price in LKR — use when user gives a budget" },
+        in_stock_only:{ type: "BOOLEAN", description: "Only show available items" },
+        sort:         { type: "STRING",  description: "price_asc | price_desc | popular" },
+        limit:        { type: "NUMBER",  description: "Results per page, max 20" },
+        cursor:       { type: "STRING",  description: "Pagination cursor" },
+        currency:     { type: "STRING",  description: "LKR (default)" },
       },
       required: ["q"]
     }

@@ -50,6 +50,35 @@ describe("MCP Tool Wrappers", () => {
         },
       });
     });
+
+    it("passes min_price and max_price correctly when filtering by budget", async () => {
+      let capturedBody: any;
+      server.use(
+        http.post("https://mcp.kapruka.com/mcp", async ({ request }) => {
+          const body = await request.json() as { id?: any };
+          capturedBody = body;
+          return HttpResponse.json({
+            jsonrpc: "2.0",
+            id: body.id,
+            result: {
+              content: [{ type: "text", text: JSON.stringify([]) }]
+            }
+          });
+        })
+      );
+      await callMcpTool("kapruka_search_products", { q: "cake", min_price: 3000, max_price: 5000 });
+      expect(capturedBody.params).toMatchObject({
+        name: "kapruka_search_products",
+        arguments: {
+          params: {
+            q: "cake",
+            min_price: 3000,
+            max_price: 5000,
+            response_format: "json",
+          }
+        },
+      });
+    });
   });
 
   describe("kapruka_get_categories", () => {
