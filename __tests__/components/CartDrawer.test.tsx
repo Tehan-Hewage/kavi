@@ -5,9 +5,13 @@ import { CartProvider } from "@/components/providers/CartProvider";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import React from "react";
 
+import { CurrencyProvider } from "@/components/providers/CurrencyProvider";
+
 const Providers = ({ children }: { children: React.ReactNode }) =>
   React.createElement(CartProvider, null,
-    React.createElement(LanguageProvider, null, children)
+    React.createElement(LanguageProvider, null,
+      React.createElement(CurrencyProvider, null, children)
+    )
   );
 
 describe("CartDrawer", () => {

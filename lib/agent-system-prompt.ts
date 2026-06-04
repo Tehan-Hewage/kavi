@@ -33,7 +33,7 @@ The customer's cart RIGHT NOW contains these items:
 ${cart.map((i, idx) => `  ${idx + 1}. ${i.name}${i.variant_name ? ` (${i.variant_name})` : ""} — qty: ${i.quantity}`).join("\n")}
 If a user asks what is in their cart, report EXACTLY this list and nothing else.`
     : `## ⚡ LIVE CART STATE (AUTHORITATIVE — overrides conversation history)
-The customer's cart is EMPTY right now. There are NO items in the cart.
+The customer's cart is EMPTY right now. Cart is currently empty. There are NO items in the cart.
 Even if earlier in this conversation you mentioned items being in the cart, they have been removed.
 If the user asks what is in their cart, tell them it is empty.`;
 
