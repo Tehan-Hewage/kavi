@@ -35,7 +35,8 @@ export interface ProductDetail {
   images: string[];
   category: string;
   description: string;
-  available: boolean;
+  in_stock?: boolean;    // field returned by the real Kapruka MCP API
+  available?: boolean;   // legacy fallback field
   variants?: { id: string; name: string; price: number }[];
 }
 

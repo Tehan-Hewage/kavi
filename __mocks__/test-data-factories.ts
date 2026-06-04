@@ -11,7 +11,8 @@ export function makeProduct(overrides = {}) {
     rating:       faker.number.float({ min: 3.5, max: 5.0, fractionDigits: 1 }),
     review_count: faker.number.int({ min: 10, max: 500 }),
     description:  faker.commerce.productDescription(),
-    available:    true,
+    in_stock:     true,   // real Kapruka MCP API field
+    available:    true,   // legacy fallback kept for test compat
     ...overrides,
   };
 }

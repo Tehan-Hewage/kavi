@@ -68,6 +68,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     return parseFloat(String(price || 0)) || 0;
   };
 
+  // Kapruka MCP returns `in_stock`; fall back to `available` for compatibility
+  const isAvailable = product ? (product.in_stock ?? product.available ?? true) : true;
+
   const basePrice = getPriceVal(product?.price);
   const currentPrice = selectedVariant ? getPriceVal(selectedVariant.price) : basePrice;
 
@@ -229,12 +232,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     <span className="font-semibold text-gray-500 dark:text-gray-400">Availability:</span>
                     <span
                       className={`font-bold px-2 py-0.5 rounded-full ${
-                        product.available
+                        isAvailable
                           ? "bg-emerald-100 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400"
                           : "bg-rose-100 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400"
                       }`}
                     >
-                      {product.available ? "In Stock" : "Out of Stock"}
+                      {isAvailable ? "In Stock" : "Out of Stock"}
                     </span>
                   </div>
 
@@ -250,7 +253,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
                   {/* CTA */}
                   <button
-                    disabled={!product.available}
+                    disabled={!isAvailable}
                     onClick={handleAddToCart}
                     className="w-full mt-4 py-3 px-4 bg-kapruka-purple hover:bg-kapruka-purple-dark disabled:bg-gray-200 disabled:dark:bg-gray-800 disabled:text-gray-400 disabled:dark:text-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-bold shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
                   >
