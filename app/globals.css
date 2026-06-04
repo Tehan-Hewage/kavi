@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Sinhala:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS Variables (light mode default) ─────────────────── */
+:root {
+  --bg-page:          #F7F7FB;
+  --bg-surface:       #FFFFFF;
+  --bg-subtle:        #F0F0F7;
+  --text-primary:     #0E0D1A;
+  --text-secondary:   #5C5A7A;
+  --text-tertiary:    #9896B4;
+  --border-subtle:    #E4E3F2;
+  --border-strong:    #C4C2E0;
+  --brand-purple:     #4A3AE8;
+  --brand-yellow:     #F5C518;
+  --user-bubble:      #4A3AE8;
+  --agent-bubble:     #FFFFFF;
+  --shadow-card:      0 2px 8px rgba(74,58,232,0.08);
+}
+
+/* ─── Dark mode ───────────────────────────────────────────── */
+.dark {
+  --bg-page:          #0C0B17;
+  --bg-surface:       #161526;
+  --bg-subtle:        #1E1D32;
+  --text-primary:     #EEEDF8;
+  --text-secondary:   #9896B4;
+  --text-tertiary:    #5C5A7A;
+  --border-subtle:    #2A2840;
+  --border-strong:    #4A3AE8;
+  --user-bubble:      #4A3AE8;
+  --agent-bubble:     #1E1D32;
+  --shadow-card:      0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* ─── Base Reset ──────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #__next {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Sinhala font class ──────────────────────────────────── */
+.font-sinhala {
+  font-family: 'Noto Sans Sinhala', 'Inter', sans-serif;
+  line-height: 1.8;  /* Sinhala needs more line height */
+  font-size: 15px;
+}
+
+.font-tamil {
+  font-family: 'Noto Sans Tamil', 'Inter', sans-serif;
+  line-height: 1.8;
+}
+
+/* ─── Scrollbar styling ───────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* ─── Horizontal product carousel scrollbar ──────────────── */
+.scroll-x::-webkit-scrollbar { height: 0px; }
+
+/* ─── Message bubble link styling ────────────────────────── */
+.agent-bubble a {
+  color: var(--brand-purple);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ─── Typing cursor blink ────────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.cursor-blink {
+  display: inline-block;
+  width: 2px;
+  height: 15px;
+  background: var(--brand-purple);
+  border-radius: 1px;
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: blink 0.9s ease-in-out infinite;
+}
+
+/* ─── Shimmer skeleton animation ─────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-subtle) 25%,
+    var(--border-subtle) 50%,
+    var(--bg-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* ─── Smooth scroll for message list ─────────────────────── */
+.message-list {
+  scroll-behavior: smooth;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ─── Pay link countdown pulse ───────────────────────────── */
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+.pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 2px solid var(--brand-yellow);
+  animation: pulse-ring 1.5s ease-out infinite;
+}

@@ -1,0 +1,17 @@
+<svg width="200" height="50" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4A3AE8" />
+      <stop offset="100%" stop-color="#3528C7" />
+    </linearGradient>
+  </defs>
+  <!-- Shopping Bag/Gift Box Symbol -->
+  <path d="M12 12H32V32C32 37.52 27.52 42 22 42C16.48 42 12 37.52 12 32V12Z" fill="url(#logoGrad)" />
+  <path d="M22 6C17.58 6 14 9.58 14 14H18C18 11.79 19.79 10 22 10C24.21 10 26 11.79 26 14H30C30 9.58 26.42 6 22 6Z" fill="#F5C518" />
+  <rect x="20" y="22" width="4" height="12" rx="2" fill="#F5C518" />
+  <rect x="16" y="26" width="12" height="4" rx="2" fill="#F5C518" />
+  
+  <!-- Text Wordmark: "kapruka" -->
+  <text x="44" y="34" font-family="'Inter', sans-serif" font-weight="900" font-size="24" fill="#4A3AE8">kapruka</text>
+  <text x="135" y="34" font-family="'Inter', sans-serif" font-weight="900" font-size="24" fill="#F5C518">.com</text>
+</svg>
