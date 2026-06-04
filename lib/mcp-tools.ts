@@ -1,4 +1,4 @@
-import { getMcpClient } from "./mcp-client";
+import { getMcpClient, resetMcpClient } from "./mcp-client";
 
 export async function callMcpTool(
   toolName: string,
@@ -9,18 +9,23 @@ export async function callMcpTool(
   try {
     // Clone input to avoid mutating parameters passed by callers
     const clonedInput = JSON.parse(JSON.stringify(input || {}));
-    
-    // Wrap flat arguments in a 'params' property as expected by the Kapruka MCP server
+
+    // NOTE: The Kapruka MCP server expects tool inputs wrapped under a
+    // "params" key inside the JSON-RPC "arguments" object, i.e.:
+    //   arguments: { params: { q: "...", ... }, response_format: "json" }
+    // This is non-standard vs. the MCP spec (which expects arguments flat),
+    // but matches the Kapruka server implementation.
+    // VERIFY against live server if tool calls return "unknown parameter" errors.
     const argumentsObject = clonedInput.params ? clonedInput : { params: clonedInput };
-    
-    // Force JSON response format to ensure the UI can render structured product carousels/cards
+
+    // Force JSON response format so the UI can render structured product carousels/cards
     if (argumentsObject.params) {
       argumentsObject.params.response_format = "json";
     }
-    
+
     const result = await client.callTool({ name: toolName, arguments: argumentsObject });
 
-    // Parse result - MCP returns content array with text blocks
+    // Parse result — MCP returns content array with text blocks
     if (result.content && Array.isArray(result.content)) {
       const textContent = result.content
         .filter((c: any) => c.type === "text")
@@ -34,8 +39,23 @@ export async function callMcpTool(
       }
     }
     return result;
-  } catch (error) {
+  } catch (error: any) {
+    const msg = String(error);
+
+    // Surface rate-limit errors as friendly messages the AI can relay to the user
+    if (
+      msg.includes("429") ||
+      msg.toLowerCase().includes("rate limit") ||
+      msg.toLowerCase().includes("too many requests")
+    ) {
+      // Reset the MCP client in case the connection is now stale
+      resetMcpClient();
+      throw new Error(
+        "rate_limit: Kapruka is receiving too many requests right now. Please wait a moment and try again."
+      );
+    }
+
     console.error(`MCP tool error [${toolName}]:`, error);
-    throw new Error(`Tool ${toolName} failed: ${String(error)}`);
+    throw new Error(`Tool ${toolName} failed: ${msg}`);
   }
 }

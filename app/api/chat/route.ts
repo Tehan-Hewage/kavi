@@ -55,10 +55,10 @@ const KAPRUKA_TOOLS: Anthropic.Tool[] = [
       type: "object",
       properties: {
         city: { type: "string", description: "Canonical city name. Examples: 'Colombo 03', 'Galle', 'Anuradhapura'." },
-        delivery_date: { type: "string", description: "Target delivery date in ISO format (YYYY-MM-DD), Sri Lanka time. Omit to check today." },
+        delivery_date: { type: "string", description: "Target delivery date in ISO format (YYYY-MM-DD), Sri Lanka time." },
         product_id: { type: "string", description: "Optional product ID, triggers perishable warnings for cakes/flowers." }
       },
-      required: ["city"]
+      required: ["city", "delivery_date"]
     }
   },
   {
@@ -67,14 +67,15 @@ const KAPRUKA_TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: "object",
       properties: {
-        query: { type: "string", description: "Partial match filter (e.g. 'colombo')" },
+        query: { type: "string", description: "Partial match filter (e.g. 'colombo'). Pass empty string to list all." },
         limit: { type: "number", description: "Max results (1-50, default 25)" }
-      }
+      },
+      required: ["query"]
     }
   },
   {
     name: "kapruka_create_order",
-    description: "Create a guest-checkout order on Kapruka and return a click-to-pay URL. Collect cart items, recipient name/phone, delivery details, and sender details before calling this.",
+    description: "Create a guest-checkout order on Kapruka and return a click-to-pay URL. Collect cart items, recipient name/phone/address/city, delivery date, and sender name before calling this.",
     input_schema: {
       type: "object",
       properties: {
@@ -84,8 +85,9 @@ const KAPRUKA_TOOLS: Anthropic.Tool[] = [
           items: {
             type: "object",
             properties: {
-              product_id: { type: "string" },
-              quantity: { type: "number", default: 1 },
+              product_id: { type: "string", description: "Kapruka product ID" },
+              quantity:   { type: "number", description: "Quantity (default 1)" },
+              variant_id: { type: "string", description: "Optional variant ID for size/colour variants" },
               icing_text: { type: "string", description: "Optional cake writing text" }
             },
             required: ["product_id"]
@@ -93,31 +95,37 @@ const KAPRUKA_TOOLS: Anthropic.Tool[] = [
         },
         recipient: {
           type: "object",
+          description: "Person who receives the delivery.",
           properties: {
-            name: { type: "string", description: "Recipient name" },
-            phone: { type: "string", description: "Recipient phone number" }
+            name:    { type: "string", description: "Recipient full name" },
+            phone:   { type: "string", description: "Recipient phone number" },
+            address: { type: "string", description: "Delivery street address" },
+            city:    { type: "string", description: "Canonical city name (use kapruka_list_delivery_cities to verify)" }
           },
-          required: ["name", "phone"]
+          required: ["name", "phone", "address", "city"]
         },
         delivery: {
           type: "object",
+          description: "Delivery timing.",
           properties: {
-            address: { type: "string", description: "Delivery street address" },
-            city: { type: "string", description: "Canonical city name" },
-            date: { type: "string", description: "Delivery date (YYYY-MM-DD)" },
-            instructions: { type: "string", description: "Optional instructions" }
+            date:         { type: "string", description: "Delivery date (YYYY-MM-DD)" },
+            instructions: { type: "string", description: "Optional special instructions" }
           },
-          required: ["address", "city", "date"]
+          required: ["date"]
         },
         sender: {
           type: "object",
+          description: "Person placing the order (shown on gift card).",
           properties: {
-            name: { type: "string", description: "Sender name shown on card" },
-            anonymous: { type: "boolean", default: false }
+            name:      { type: "string", description: "Sender name shown on card" },
+            email:     { type: "string", description: "Sender email for order confirmation" },
+            phone:     { type: "string", description: "Sender phone number" },
+            anonymous: { type: "boolean", description: "Hide sender identity from recipient" }
           },
           required: ["name"]
         },
-        gift_message: { type: "string", description: "Optional card message (max 300 chars)" }
+        gift_message: { type: "string", description: "Optional gift card message (max 300 chars)" },
+        currency:     { type: "string", description: "Currency code, default LKR" }
       },
       required: ["cart", "recipient", "delivery", "sender"]
     }
@@ -183,11 +191,11 @@ const GEMINI_TOOLS = [
     parameters: {
       type: "OBJECT",
       properties: {
-        city: { type: "STRING", description: "Canonical city name. Examples: 'Colombo 03', 'Galle', 'Anuradhapura'." },
-        delivery_date: { type: "STRING", description: "Target delivery date in ISO format (YYYY-MM-DD), Sri Lanka time. Omit to check today." },
-        product_id: { type: "STRING", description: "Optional product ID, triggers perishable warnings for cakes/flowers." }
+        city:          { type: "STRING", description: "Canonical city name. Examples: 'Colombo 03', 'Galle', 'Anuradhapura'." },
+        delivery_date: { type: "STRING", description: "Target delivery date in ISO format (YYYY-MM-DD), Sri Lanka time." },
+        product_id:    { type: "STRING", description: "Optional product ID, triggers perishable warnings for cakes/flowers." }
       },
-      required: ["city"]
+      required: ["city", "delivery_date"]
     }
   },
   {
@@ -196,14 +204,15 @@ const GEMINI_TOOLS = [
     parameters: {
       type: "OBJECT",
       properties: {
-        query: { type: "STRING", description: "Partial match filter (e.g. 'colombo')" },
+        query: { type: "STRING", description: "Partial match filter (e.g. 'colombo'). Pass empty string to list all." },
         limit: { type: "NUMBER", description: "Max results (1-50, default 25)" }
-      }
+      },
+      required: ["query"]
     }
   },
   {
     name: "kapruka_create_order",
-    description: "Create a guest-checkout order on Kapruka and return a click-to-pay URL. Collect cart items, recipient name/phone, delivery details, and sender details before calling this.",
+    description: "Create a guest-checkout order on Kapruka and return a click-to-pay URL. Collect cart items, recipient name/phone/address/city, delivery date, and sender name before calling this.",
     parameters: {
       type: "OBJECT",
       properties: {
@@ -213,8 +222,9 @@ const GEMINI_TOOLS = [
           items: {
             type: "OBJECT",
             properties: {
-              product_id: { type: "STRING" },
-              quantity: { type: "NUMBER", default: 1 },
+              product_id: { type: "STRING", description: "Kapruka product ID" },
+              quantity:   { type: "NUMBER", description: "Quantity (default 1)" },
+              variant_id: { type: "STRING", description: "Optional variant ID for size/colour variants" },
               icing_text: { type: "STRING", description: "Optional cake writing text" }
             },
             required: ["product_id"]
@@ -222,31 +232,37 @@ const GEMINI_TOOLS = [
         },
         recipient: {
           type: "OBJECT",
+          description: "Person who receives the delivery.",
           properties: {
-            name: { type: "STRING", description: "Recipient name" },
-            phone: { type: "STRING", description: "Recipient phone number" }
+            name:    { type: "STRING", description: "Recipient full name" },
+            phone:   { type: "STRING", description: "Recipient phone number" },
+            address: { type: "STRING", description: "Delivery street address" },
+            city:    { type: "STRING", description: "Canonical city name (use kapruka_list_delivery_cities to verify)" }
           },
-          required: ["name", "phone"]
+          required: ["name", "phone", "address", "city"]
         },
         delivery: {
           type: "OBJECT",
+          description: "Delivery timing.",
           properties: {
-            address: { type: "STRING", description: "Delivery street address" },
-            city: { type: "STRING", description: "Canonical city name" },
-            date: { type: "STRING", description: "Delivery date (YYYY-MM-DD)" },
-            instructions: { type: "STRING", description: "Optional instructions" }
+            date:         { type: "STRING", description: "Delivery date (YYYY-MM-DD)" },
+            instructions: { type: "STRING", description: "Optional special instructions" }
           },
-          required: ["address", "city", "date"]
+          required: ["date"]
         },
         sender: {
           type: "OBJECT",
+          description: "Person placing the order (shown on gift card).",
           properties: {
-            name: { type: "STRING", description: "Sender name shown on card" },
-            anonymous: { type: "BOOLEAN", default: false }
+            name:      { type: "STRING", description: "Sender name shown on card" },
+            email:     { type: "STRING", description: "Sender email for order confirmation" },
+            phone:     { type: "STRING", description: "Sender phone number" },
+            anonymous: { type: "BOOLEAN", description: "Hide sender identity from recipient" }
           },
           required: ["name"]
         },
-        gift_message: { type: "STRING", description: "Optional card message (max 300 chars)" }
+        gift_message: { type: "STRING", description: "Optional gift card message (max 300 chars)" },
+        currency:     { type: "STRING", description: "Currency code, default LKR" }
       },
       required: ["cart", "recipient", "delivery", "sender"]
     }
