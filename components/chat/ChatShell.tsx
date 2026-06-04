@@ -29,7 +29,7 @@ export default function ChatShell({
 
   return (
     <div
-      className="flex flex-col h-screen w-screen overflow-hidden"
+      className="flex flex-col h-[100dvh] w-full overflow-x-hidden overflow-y-hidden"
       style={{ background: "var(--bg-page)" }}
     >
       <Header cartCount={cartCount} onOpenCart={() => setIsCartOpen(true)} />

@@ -4,6 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Prevent horizontal overflow hiding the header on mobile ─── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+  height: 100%;
+}
+
 /* ─── Light mode (default) — matches kapruka.com ─── */
 :root {
   /* Brand */
