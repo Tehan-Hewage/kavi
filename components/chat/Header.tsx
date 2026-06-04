@@ -16,7 +16,7 @@ interface HeaderProps {
 export default function Header({ cartCount, onOpenCart }: HeaderProps) {
   return (
     <header
-      className="flex-shrink-0 flex items-center justify-between px-3 sm:px-6 h-14 sm:h-16 z-50 min-w-0 overflow-hidden w-full"
+      className="flex-shrink-0 flex items-center justify-between px-3 sm:px-6 h-14 sm:h-16 z-50 min-w-0 w-full"
       style={{
         background:   "#4C1D6E",
         borderBottom: "1px solid rgba(255,255,255,0.12)",
