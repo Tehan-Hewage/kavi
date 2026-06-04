@@ -6,11 +6,11 @@ import { Language } from "@/lib/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Check } from "lucide-react";
 
-const OPTIONS: { value: Language; label: string; short: string; flag: string }[] = [
-  { value: "en",       label: "English",  short: "EN",  flag: "🇬🇧" },
-  { value: "si",       label: "සිංහල",    short: "සිං", flag: "🇱🇰" },
-  { value: "ta",       label: "தமிழ்",    short: "த",   flag: "🇮🇳" },
-  { value: "tanglish", label: "Tanglish", short: "Ta",  flag: "🇮🇳" },
+const OPTIONS: { value: Language; label: string; short: string }[] = [
+  { value: "en",       label: "English",  short: "EN"  },
+  { value: "si",       label: "සිංහල",    short: "සිං" },
+  { value: "ta",       label: "தமிழ்",    short: "த"   },
+  { value: "tanglish", label: "Tanglish", short: "Ta"  },
 ];
 
 export const LanguagePill: React.FC = () => {
@@ -92,10 +92,7 @@ export const LanguagePill: React.FC = () => {
                     if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
                   }}
                 >
-                  <span className="flex items-center gap-1.5">
-                    <span>{opt.flag}</span>
-                    <span>{opt.label}</span>
-                  </span>
+                  <span>{opt.label}</span>
                   {isActive && <Check size={11} style={{ color: "#FFD700" }} />}
                 </button>
               );
@@ -125,10 +122,7 @@ export const LanguagePill: React.FC = () => {
                   transition={{ type: "spring", stiffness: 400, damping: 28 }}
                 />
               )}
-              <span className="relative z-10 flex items-center gap-1">
-                <span>{opt.flag}</span>
-                <span>{opt.label}</span>
-              </span>
+              <span className="relative z-10">{opt.label}</span>
             </button>
           );
         })}

@@ -48,8 +48,7 @@ export const CurrencyPill: React.FC = () => {
         aria-expanded={open}
       >
         <span>{active.flag}</span>
-        {/* Label hidden on mobile to save header space */}
-        <span className="hidden sm:inline">{active.label}</span>
+        <span>{active.label}</span>
         <ChevronDown
           size={10}
           className="transition-transform duration-200"
