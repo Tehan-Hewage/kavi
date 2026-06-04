@@ -343,7 +343,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           style={{ background: "#FFF3CC", color: "#4C1D6E" }}
         >
           <img src="/kapruka-logo-small.svg" alt="" className="h-3.5" />
-          Powered by Kapruka
+          Powered by Kapruka MCP
         </div>
 
         {/* Center welcome card */}
