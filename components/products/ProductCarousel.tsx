@@ -8,10 +8,12 @@ import { motion } from "framer-motion";
 
 interface ProductCarouselProps {
   products: Product[];
+  onOpenDetails?: (productId: string) => void;
 }
 
 export const ProductCarousel: React.FC<ProductCarouselProps> = ({
   products,
+  onOpenDetails,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -22,7 +24,7 @@ export const ProductCarousel: React.FC<ProductCarouselProps> = ({
     }
   };
 
-  if (!products || products.length === 0) return null;
+  if (!products || !Array.isArray(products) || products.length === 0) return null;
 
   return (
     <motion.div
@@ -48,7 +50,7 @@ export const ProductCarousel: React.FC<ProductCarouselProps> = ({
       >
         {products.map((p, i) => (
           <div key={p.id} className="snap-start flex-shrink-0">
-            <ProductCard product={p} index={i} />
+            <ProductCard product={p} index={i} onOpenDetails={onOpenDetails} />
           </div>
         ))}
       </div>

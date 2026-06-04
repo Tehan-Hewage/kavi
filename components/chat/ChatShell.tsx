@@ -40,8 +40,8 @@ export default function ChatShell({
       <header
         className="flex-shrink-0 flex items-center justify-between px-4 md:px-6 h-16 border-b"
         style={{
-          background: "var(--bg-surface)",
-          borderColor: "var(--border-subtle)",
+          background: "#0C0B17",
+          borderColor: "#2A2840",
           zIndex: 50,
         }}
       >
@@ -58,7 +58,7 @@ export default function ChatShell({
           </div>
 
           {/* Kavi branding */}
-          <div className="flex items-center gap-2 border-l pl-3 dark:border-gray-800">
+          <div className="flex items-center gap-2 border-l pl-3" style={{ borderColor: "#2A2840" }}>
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-inner"
               style={{ background: "var(--brand-purple)" }}
@@ -66,8 +66,8 @@ export default function ChatShell({
               K
             </div>
             <div className="hidden sm:block">
-              <p className="text-xs font-bold leading-none" style={{ color: "var(--text-primary)" }}>Kavi</p>
-              <p className="text-[10px] font-bold mt-0.5 leading-none" style={{ color: "var(--text-tertiary)" }}>AI Shopping Agent</p>
+              <p className="text-xs font-bold leading-none" style={{ color: "#EEEDF8" }}>Kavi</p>
+              <p className="text-[10px] font-bold mt-0.5 leading-none" style={{ color: "#9896B4" }}>AI Shopping Agent</p>
             </div>
           </div>
         </div>
@@ -79,11 +79,11 @@ export default function ChatShell({
           {/* Cart Button */}
           <button
             onClick={() => setIsCartOpen(true)}
-            className="relative p-2 bg-gray-100 dark:bg-gray-850 hover:bg-gray-250 dark:hover:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 transition-colors shadow-inner"
+            className="relative p-2 bg-gray-800 hover:bg-gray-700 text-gray-300 transition-colors shadow-inner"
           >
             <ShoppingCart className="w-5 h-5" />
             {cartCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 bg-kapruka-purple text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow border-2 border-white dark:border-gray-900 animate-scale-in">
+              <span className="absolute -top-1.5 -right-1.5 bg-kapruka-purple text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow border-2 border-gray-900 animate-scale-in">
                 {cartCount}
               </span>
             )}

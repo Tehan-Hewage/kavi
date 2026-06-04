@@ -10,13 +10,13 @@ interface TypingIndicatorProps {
 
 // Map tool names to friendly labels
 const TOOL_LABELS: Record<string, string> = {
-  kapruka_search_products:    "Searching Kapruka catalog...",
-  kapruka_get_categories:     "Loading categories...",
-  kapruka_get_product:        "Getting product details...",
-  kapruka_quote_delivery:     "Checking delivery availability...",
-  kapruka_create_order:       "Creating your order...",
-  kapruka_track_order:        "Looking up your order...",
-  kapruka_check_availability: "Checking availability...",
+  kapruka_search_products:      "Searching Kapruka catalog...",
+  kapruka_list_categories:      "Loading categories...",
+  kapruka_get_product:         "Getting product details...",
+  kapruka_check_delivery:      "Checking delivery availability...",
+  kapruka_create_order:        "Creating your order...",
+  kapruka_track_order:         "Looking up your order...",
+  kapruka_list_delivery_cities: "Looking up delivery cities...",
 };
 
 export const TypingIndicator: React.FC<TypingIndicatorProps> = ({

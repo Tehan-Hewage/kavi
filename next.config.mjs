@@ -1,11 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      "www.kapruka.com",
-      "kapruka.com",
-      "images.kapruka.com",
-      "cdn.kapruka.com"
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.kapruka.com",
+      },
+      {
+        protocol: "http",
+        hostname: "**.kapruka.com",
+      },
+      {
+        protocol: "https",
+        hostname: "kapruka.com",
+      },
+      {
+        protocol: "http",
+        hostname: "kapruka.com",
+      }
     ]
   },
   experimental: {

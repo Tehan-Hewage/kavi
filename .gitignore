@@ -34,3 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local test assets & reports
+/playwright-report/
+/test-results/
+/scratch/
+/lib/test_chat_stream.ts
+

@@ -169,32 +169,38 @@ export default function ChatPage() {
               if (data.type === "tool_start") {
                 setIsThinking(true);
                 setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastMsg = updated[updated.length - 1];
+                  if (prev.length === 0) return prev;
+                  const lastMsg = prev[prev.length - 1];
                   if (lastMsg && lastMsg.role === "assistant") {
-                    lastMsg.isToolThinking = true;
-                    lastMsg.toolThinkingName = data.tool;
+                    const updated = [...prev];
+                    updated[updated.length - 1] = {
+                      ...lastMsg,
+                      isToolThinking: true,
+                      toolThinkingName: data.tool,
+                    };
+                    return updated;
                   }
-                  return updated;
+                  return prev;
                 });
               } else if (data.type === "tool_result") {
                 setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastMsg = updated[updated.length - 1];
+                  if (prev.length === 0) return prev;
+                  const lastMsg = prev[prev.length - 1];
                   if (lastMsg && lastMsg.role === "assistant") {
-                    lastMsg.isToolThinking = false;
-                    if (!lastMsg.toolResults) lastMsg.toolResults = [];
-                    // Avoid duplicate tool results
-                    if (!lastMsg.toolResults.some(tr => tr.tool === data.tool && JSON.stringify(tr.result) === JSON.stringify(data.result))) {
-                      // Adjust Kapruka create order structure if needed
+                    const existingResults = lastMsg.toolResults || [];
+                    const isDuplicate = existingResults.some(
+                      (tr) => tr.tool === data.tool && JSON.stringify(tr.result) === JSON.stringify(data.result)
+                    );
+                    
+                    if (!isDuplicate) {
+                      const updatedResults = [...existingResults];
                       if (data.tool === "kapruka_create_order") {
-                        // Include local cart item details for total price summaries
-                        const itemsSummary = cart.map(item => ({
+                        const itemsSummary = cart.map((item: any) => ({
                           name: item.name,
                           quantity: item.quantity,
                           price: item.price
                         }));
-                        lastMsg.toolResults.push({
+                        updatedResults.push({
                           tool: data.tool,
                           result: {
                             ...data.result,
@@ -204,49 +210,75 @@ export default function ChatPage() {
                           input: data.input
                         });
                       } else {
-                        lastMsg.toolResults.push({ tool: data.tool, result: data.result, input: data.input });
+                        updatedResults.push({
+                          tool: data.tool,
+                          result: data.result,
+                          input: data.input
+                        });
                       }
+                      
+                      const updated = [...prev];
+                      updated[updated.length - 1] = {
+                        ...lastMsg,
+                        isToolThinking: false,
+                        toolResults: updatedResults
+                      };
+                      return updated;
                     }
                   }
-                  return updated;
+                  return prev;
                 });
               } else if (data.type === "text") {
                 setIsThinking(false);
                 setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastMsg = updated[updated.length - 1];
+                  if (prev.length === 0) return prev;
+                  const lastMsg = prev[prev.length - 1];
                   if (lastMsg && lastMsg.role === "assistant") {
-                    lastMsg.content += data.delta;
+                    const updated = [...prev];
+                    updated[updated.length - 1] = {
+                      ...lastMsg,
+                      content: lastMsg.content + data.delta
+                    };
+                    return updated;
                   }
-                  return updated;
+                  return prev;
                 });
               } else if (data.type === "error") {
                 setIsThinking(false);
                 setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastMsg = updated[updated.length - 1];
+                  if (prev.length === 0) return prev;
+                  const lastMsg = prev[prev.length - 1];
                   if (lastMsg && lastMsg.role === "assistant") {
-                    lastMsg.content = formatFriendlyError(data.message);
-                    lastMsg.isToolThinking = false;
+                    const updated = [...prev];
+                    updated[updated.length - 1] = {
+                      ...lastMsg,
+                      content: formatFriendlyError(data.message),
+                      isToolThinking: false
+                    };
+                    return updated;
                   }
-                  return updated;
+                  return prev;
                 });
                 break;
               }
             } catch (err) {
               console.error("SSE parse error", err, "raw line:", jsonStr);
-              // Fallback error detection if the server sent raw error message or JSON parse failed but line contains error clues
               const checkMsg = jsonStr.toLowerCase();
               if (checkMsg.includes("credit balance") || checkMsg.includes("billing") || checkMsg.includes("400") || checkMsg.includes("429") || checkMsg.includes("limit") || checkMsg.includes("error")) {
                 setIsThinking(false);
                 setMessages((prev) => {
-                  const updated = [...prev];
-                  const lastMsg = updated[updated.length - 1];
+                  if (prev.length === 0) return prev;
+                  const lastMsg = prev[prev.length - 1];
                   if (lastMsg && lastMsg.role === "assistant") {
-                    lastMsg.content = formatFriendlyError(jsonStr);
-                    lastMsg.isToolThinking = false;
+                    const updated = [...prev];
+                    updated[updated.length - 1] = {
+                      ...lastMsg,
+                      content: formatFriendlyError(jsonStr),
+                      isToolThinking: false
+                    };
+                    return updated;
                   }
-                  return updated;
+                  return prev;
                 });
                 break;
               }
@@ -257,18 +289,23 @@ export default function ChatPage() {
     } catch (err: any) {
       console.error(err);
       setMessages((prev) => {
-        const updated = [...prev];
-        const lastMsg = updated[updated.length - 1];
+        if (prev.length === 0) return prev;
+        const lastMsg = prev[prev.length - 1];
         if (lastMsg && lastMsg.role === "assistant") {
           const friendlyMessage = formatFriendlyError(err.message || String(err));
-          if (lastMsg.content === "") {
-            lastMsg.content = friendlyMessage;
-          } else {
-            lastMsg.content += `\n\n⚠️ **System Alert:** ${friendlyMessage}`;
-          }
-          lastMsg.isToolThinking = false;
+          const updatedContent = lastMsg.content === ""
+            ? friendlyMessage
+            : `${lastMsg.content}\n\n⚠️ **System Alert:** ${friendlyMessage}`;
+          
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            ...lastMsg,
+            content: updatedContent,
+            isToolThinking: false
+          };
+          return updated;
         }
-        return updated;
+        return prev;
       });
     } finally {
       setIsThinking(false);

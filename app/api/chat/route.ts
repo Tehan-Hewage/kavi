@@ -10,107 +10,121 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || "dumm
 const KAPRUKA_TOOLS: Anthropic.Tool[] = [
   {
     name: "kapruka_search_products",
-    description: "Search the live Kapruka catalog by keyword or category. Use this whenever the user asks about products, gifts, or wants to browse.",
+    description: "Search for products on Kapruka.com by keyword q, with optional category filter. Returns matching products with prices, images, and IDs.",
     input_schema: {
       type: "object",
       properties: {
-        query: { type: "string", description: "Search query, e.g. 'birthday cake' or 'Samsung phone'" },
-        category: { type: "string", description: "Optional category slug to filter results" },
-        limit: { type: "number", description: "Max results (default 10, max 20)" }
+        q: { type: "string", description: "Search query, e.g. 'birthday cake' or 'roses' or 'tea gift'. Min 3 characters." },
+        category: { type: "string", description: "Optional category filter name (e.g. 'Birthday', 'Cakes', 'Flowers'). Case-insensitive." },
+        limit: { type: "number", description: "Max results to return (1-50, default 10)" }
       },
-      required: ["query"]
+      required: ["q"]
     }
   },
   {
-    name: "kapruka_get_categories",
-    description: "Get Kapruka product categories. Call with no parent_id for root categories.",
+    name: "kapruka_list_categories",
+    description: "List top-level Kapruka product categories by name. Use category names to filter search query.",
     input_schema: {
       type: "object",
       properties: {
-        parent_id: { type: "string", description: "Parent category ID for subcategories" }
+        depth: { type: "number", description: "Sub-category levels to include (1 or 2, default 1)" }
       }
     }
   },
   {
     name: "kapruka_get_product",
-    description: "Get full details, images, and variants for a specific product by ID.",
+    description: "Fetch full details, description, images, price, and variants for a single Kapruka product by its product ID.",
     input_schema: {
       type: "object",
       properties: {
-        product_id: { type: "string" }
+        product_id: { type: "string", description: "Kapruka product ID, e.g. 'cake00ka002034'" }
       },
       required: ["product_id"]
     }
   },
   {
-    name: "kapruka_quote_delivery",
-    description: "Check delivery availability and get the flat delivery fee for a product to a city on a specific date. Always call this before creating an order.",
+    name: "kapruka_check_delivery",
+    description: "Check delivery availability, flat rate (LKR), and perishable alerts to a city on a specific date. Always check this before booking an order.",
     input_schema: {
       type: "object",
       properties: {
-        product_id: { type: "string" },
-        city: { type: "string", description: "Sri Lankan city name, e.g. 'Colombo', 'Kandy', 'Galle'" },
-        delivery_date: { type: "string", description: "ISO 8601 date string: YYYY-MM-DD" }
+        city: { type: "string", description: "Canonical city name. Examples: 'Colombo 03', 'Galle', 'Anuradhapura'." },
+        delivery_date: { type: "string", description: "Target delivery date in ISO format (YYYY-MM-DD), Sri Lanka time. Omit to check today." },
+        product_id: { type: "string", description: "Optional product ID, triggers perishable warnings for cakes/flowers." }
       },
-      required: ["product_id", "city", "delivery_date"]
+      required: ["city"]
+    }
+  },
+  {
+    name: "kapruka_list_delivery_cities",
+    description: "List or search valid Sri Lankan delivery cities. Use this to lookup canonical city names.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Partial match filter (e.g. 'colombo')" },
+        limit: { type: "number", description: "Max results (1-50, default 25)" }
+      }
     }
   },
   {
     name: "kapruka_create_order",
-    description: "Create a guest checkout order and return a 60-minute pay link. Collect recipient name, phone, address, city, and delivery date BEFORE calling this.",
+    description: "Create a guest-checkout order on Kapruka and return a click-to-pay URL. Collect cart items, recipient name/phone, delivery details, and sender details before calling this.",
     input_schema: {
       type: "object",
       properties: {
-        items: {
+        cart: {
           type: "array",
+          description: "List of items in the cart.",
           items: {
             type: "object",
             properties: {
               product_id: { type: "string" },
-              variant_id: { type: "string" },
-              quantity: { type: "number" }
+              quantity: { type: "number", default: 1 },
+              icing_text: { type: "string", description: "Optional cake writing text" }
             },
-            required: ["product_id", "quantity"]
+            required: ["product_id"]
           }
         },
         recipient: {
           type: "object",
           properties: {
-            name: { type: "string" },
-            phone: { type: "string" },
-            address: { type: "string" },
-            city: { type: "string" }
+            name: { type: "string", description: "Recipient name" },
+            phone: { type: "string", description: "Recipient phone number" }
           },
-          required: ["name", "phone", "address", "city"]
+          required: ["name", "phone"]
         },
-        delivery_date: { type: "string" },
-        gift_message: { type: "string", description: "Optional gift note (max 200 chars)" },
-        sender_name: { type: "string", description: "Name shown on gift card" }
+        delivery: {
+          type: "object",
+          properties: {
+            address: { type: "string", description: "Delivery street address" },
+            city: { type: "string", description: "Canonical city name" },
+            date: { type: "string", description: "Delivery date (YYYY-MM-DD)" },
+            instructions: { type: "string", description: "Optional instructions" }
+          },
+          required: ["address", "city", "date"]
+        },
+        sender: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Sender name shown on card" },
+            anonymous: { type: "boolean", default: false }
+          },
+          required: ["name"]
+        },
+        gift_message: { type: "string", description: "Optional card message (max 300 chars)" }
       },
-      required: ["items", "recipient", "delivery_date"]
+      required: ["cart", "recipient", "delivery", "sender"]
     }
   },
   {
     name: "kapruka_track_order",
-    description: "Track an existing order by order ID. The customer finds their order ID in their confirmation email.",
+    description: "Look up status and delivery progress for a paid Kapruka order using the order number.",
     input_schema: {
       type: "object",
       properties: {
-        order_id: { type: "string" }
+        order_number: { type: "string", description: "Order number from confirmation email (e.g. 'VIMP34456CB2')." }
       },
-      required: ["order_id"]
-    }
-  },
-  {
-    name: "kapruka_check_availability",
-    description: "Quick check whether a product can be delivered to a specific city.",
-    input_schema: {
-      type: "object",
-      properties: {
-        product_id: { type: "string" },
-        city: { type: "string" }
-      },
-      required: ["product_id", "city"]
+      required: ["order_number"]
     }
   }
 ];
@@ -119,107 +133,121 @@ const KAPRUKA_TOOLS: Anthropic.Tool[] = [
 const GEMINI_TOOLS = [
   {
     name: "kapruka_search_products",
-    description: "Search the live Kapruka catalog by keyword or category. Use this whenever the user asks about products, gifts, or wants to browse.",
+    description: "Search for products on Kapruka.com by keyword q, with optional category filter. Returns matching products with prices, images, and IDs.",
     parameters: {
       type: "OBJECT",
       properties: {
-        query: { type: "STRING", description: "Search query, e.g. 'birthday cake' or 'Samsung phone'" },
-        category: { type: "STRING", description: "Optional category slug to filter results" },
-        limit: { type: "NUMBER", description: "Max results (default 10, max 20)" }
+        q: { type: "STRING", description: "Search query, e.g. 'birthday cake' or 'roses' or 'tea gift'. Min 3 characters." },
+        category: { type: "STRING", description: "Optional category filter name (e.g. 'Birthday', 'Cakes', 'Flowers'). Case-insensitive." },
+        limit: { type: "NUMBER", description: "Max results to return (1-50, default 10)" }
       },
-      required: ["query"]
+      required: ["q"]
     }
   },
   {
-    name: "kapruka_get_categories",
-    description: "Get Kapruka product categories. Call with no parent_id for root categories.",
+    name: "kapruka_list_categories",
+    description: "List top-level Kapruka product categories by name. Use category names to filter search query.",
     parameters: {
       type: "OBJECT",
       properties: {
-        parent_id: { type: "STRING", description: "Parent category ID for subcategories" }
+        depth: { type: "NUMBER", description: "Sub-category levels to include (1 or 2, default 1)" }
       }
     }
   },
   {
     name: "kapruka_get_product",
-    description: "Get full details, images, and variants for a specific product by ID.",
+    description: "Fetch full details, description, images, price, and variants for a single Kapruka product by its product ID.",
     parameters: {
       type: "OBJECT",
       properties: {
-        product_id: { type: "STRING" }
+        product_id: { type: "STRING", description: "Kapruka product ID, e.g. 'cake00ka002034'" }
       },
       required: ["product_id"]
     }
   },
   {
-    name: "kapruka_quote_delivery",
-    description: "Check delivery availability and get the flat delivery fee for a product to a city on a specific date. Always call this before creating an order.",
+    name: "kapruka_check_delivery",
+    description: "Check delivery availability, flat rate (LKR), and perishable alerts to a city on a specific date. Always check this before booking an order.",
     parameters: {
       type: "OBJECT",
       properties: {
-        product_id: { type: "STRING" },
-        city: { type: "STRING", description: "Sri Lankan city name, e.g. 'Colombo', 'Kandy', 'Galle'" },
-        delivery_date: { type: "STRING", description: "ISO 8601 date string: YYYY-MM-DD" }
+        city: { type: "STRING", description: "Canonical city name. Examples: 'Colombo 03', 'Galle', 'Anuradhapura'." },
+        delivery_date: { type: "STRING", description: "Target delivery date in ISO format (YYYY-MM-DD), Sri Lanka time. Omit to check today." },
+        product_id: { type: "STRING", description: "Optional product ID, triggers perishable warnings for cakes/flowers." }
       },
-      required: ["product_id", "city", "delivery_date"]
+      required: ["city"]
+    }
+  },
+  {
+    name: "kapruka_list_delivery_cities",
+    description: "List or search valid Sri Lankan delivery cities. Use this to lookup canonical city names.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        query: { type: "STRING", description: "Partial match filter (e.g. 'colombo')" },
+        limit: { type: "NUMBER", description: "Max results (1-50, default 25)" }
+      }
     }
   },
   {
     name: "kapruka_create_order",
-    description: "Create a guest checkout order and return a 60-minute pay link. Collect recipient name, phone, address, city, and delivery date BEFORE calling this.",
+    description: "Create a guest-checkout order on Kapruka and return a click-to-pay URL. Collect cart items, recipient name/phone, delivery details, and sender details before calling this.",
     parameters: {
       type: "OBJECT",
       properties: {
-        items: {
+        cart: {
           type: "ARRAY",
+          description: "List of items in the cart.",
           items: {
             type: "OBJECT",
             properties: {
               product_id: { type: "STRING" },
-              variant_id: { type: "STRING" },
-              quantity: { type: "NUMBER" }
+              quantity: { type: "NUMBER", default: 1 },
+              icing_text: { type: "STRING", description: "Optional cake writing text" }
             },
-            required: ["product_id", "quantity"]
+            required: ["product_id"]
           }
         },
         recipient: {
           type: "OBJECT",
           properties: {
-            name: { type: "STRING" },
-            phone: { type: "STRING" },
-            address: { type: "STRING" },
-            city: { type: "STRING" }
+            name: { type: "STRING", description: "Recipient name" },
+            phone: { type: "STRING", description: "Recipient phone number" }
           },
-          required: ["name", "phone", "address", "city"]
+          required: ["name", "phone"]
         },
-        delivery_date: { type: "STRING" },
-        gift_message: { type: "STRING", description: "Optional gift note (max 200 chars)" },
-        sender_name: { type: "STRING", description: "Name shown on gift card" }
+        delivery: {
+          type: "OBJECT",
+          properties: {
+            address: { type: "STRING", description: "Delivery street address" },
+            city: { type: "STRING", description: "Canonical city name" },
+            date: { type: "STRING", description: "Delivery date (YYYY-MM-DD)" },
+            instructions: { type: "STRING", description: "Optional instructions" }
+          },
+          required: ["address", "city", "date"]
+        },
+        sender: {
+          type: "OBJECT",
+          properties: {
+            name: { type: "STRING", description: "Sender name shown on card" },
+            anonymous: { type: "BOOLEAN", default: false }
+          },
+          required: ["name"]
+        },
+        gift_message: { type: "STRING", description: "Optional card message (max 300 chars)" }
       },
-      required: ["items", "recipient", "delivery_date"]
+      required: ["cart", "recipient", "delivery", "sender"]
     }
   },
   {
     name: "kapruka_track_order",
-    description: "Track an existing order by order ID. The customer finds their order ID in their confirmation email.",
+    description: "Look up status and delivery progress for a paid Kapruka order using the order number.",
     parameters: {
       type: "OBJECT",
       properties: {
-        order_id: { type: "STRING" }
+        order_number: { type: "STRING", description: "Order number from confirmation email (e.g. 'VIMP34456CB2')." }
       },
-      required: ["order_id"]
-    }
-  },
-  {
-    name: "kapruka_check_availability",
-    description: "Quick check whether a product can be delivered to a specific city.",
-    parameters: {
-      type: "OBJECT",
-      properties: {
-        product_id: { type: "STRING" },
-        city: { type: "STRING" }
-      },
-      required: ["product_id", "city"]
+      required: ["order_number"]
     }
   }
 ];
@@ -227,7 +255,7 @@ const GEMINI_TOOLS = [
 export async function POST(req: NextRequest) {
   const { messages, language, cart } = await req.json();
   
-  const systemPrompt = buildSystemPrompt(language, cart);
+  const systemPrompt = buildSystemPrompt(language, cart || []);
 
   // Agentic loop with tool use
   const encoder = new TextEncoder();
@@ -259,7 +287,7 @@ export async function POST(req: NextRequest) {
           };
 
           const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${process.env.GEMINI_API_KEY}`,
             {
               method: "POST",
               headers: {

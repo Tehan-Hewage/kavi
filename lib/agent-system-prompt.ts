@@ -1,7 +1,7 @@
 import { CartItem } from "./types";
 
-export function buildSystemPrompt(language: string, cart: CartItem[]): string {
-  const cartSummary = cart.length > 0
+export function buildSystemPrompt(language: string, cart: CartItem[] = []): string {
+  const cartSummary = (cart ?? []).length > 0
     ? `\nCurrent cart: ${cart.map(i => `${i.name} x${i.quantity}${i.variant_name ? ` (${i.variant_name})` : ""}`).join(", ")}`
     : "\nCart is currently empty.";
 

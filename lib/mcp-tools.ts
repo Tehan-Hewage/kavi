@@ -7,7 +7,18 @@ export async function callMcpTool(
   const client = await getMcpClient();
 
   try {
-    const result = await client.callTool({ name: toolName, arguments: input });
+    // Clone input to avoid mutating parameters passed by callers
+    const clonedInput = JSON.parse(JSON.stringify(input || {}));
+    
+    // Wrap flat arguments in a 'params' property as expected by the Kapruka MCP server
+    const argumentsObject = clonedInput.params ? clonedInput : { params: clonedInput };
+    
+    // Force JSON response format to ensure the UI can render structured product carousels/cards
+    if (argumentsObject.params) {
+      argumentsObject.params.response_format = "json";
+    }
+    
+    const result = await client.callTool({ name: toolName, arguments: argumentsObject });
 
     // Parse result - MCP returns content array with text blocks
     if (result.content && Array.isArray(result.content)) {

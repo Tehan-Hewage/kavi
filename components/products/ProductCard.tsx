@@ -11,15 +11,27 @@ import { Product } from "@/lib/types";
 interface ProductCardProps {
   product: Product;
   index?: number;
+  onOpenDetails?: (productId: string) => void;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   index = 0,
+  onOpenDetails,
 }) => {
   const { addItem, cart } = useCart();
   const { t } = useLanguage();
   const inCart = cart.some((i) => i.id === product.id);
+
+  const categoryName = typeof product.category === "object" && product.category !== null
+    ? (product.category as any).name || (product.category as any).id || ""
+    : product.category;
+
+  const priceVal = typeof product.price === "object" && product.price !== null
+    ? (product.price as any).amount || 0
+    : typeof product.price === "number"
+      ? product.price
+      : parseFloat(String(product.price || 0));
 
   return (
     <motion.div
@@ -27,6 +39,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+      onClick={() => onOpenDetails?.(product.id)}
       className="flex-shrink-0 flex flex-col overflow-hidden cursor-pointer h-full"
       style={{
         width:        "168px",
@@ -50,7 +63,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           }}
         />
         {/* Category badge */}
-        {product.category && (
+        {categoryName && (
           <span
             className="absolute top-2 left-2 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
             style={{
@@ -59,7 +72,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               backdropFilter: "blur(4px)",
             }}
           >
-            {product.category}
+            {categoryName}
           </span>
         )}
       </div>
@@ -87,7 +100,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             className="text-base font-extrabold"
             style={{ color: "var(--brand-purple)" }}
           >
-            Rs {product.price.toLocaleString("en-LK")}
+            Rs {priceVal.toLocaleString("en-LK")}
           </p>
         </div>
 
@@ -103,14 +116,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           {/* Add to cart button */}
           <motion.button
             whileTap={{ scale: 0.96 }}
-            onClick={() =>
+            onClick={(e) => {
+              e.stopPropagation();
               addItem({
                 id: product.id,
                 name: product.name,
-                price: product.price,
+                price: priceVal,
                 image_url: product.image_url,
-              })
-            }
+              });
+            }}
             className="w-full flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full transition-all shadow-sm"
             style={{
               background:   inCart ? "var(--bg-subtle)" : "var(--brand-purple)",

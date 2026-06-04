@@ -58,7 +58,22 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   if (!productId) return null;
 
-  const currentPrice = selectedVariant ? selectedVariant.price : product?.price || 0;
+  const getPriceVal = (price: any) => {
+    if (typeof price === "object" && price !== null) {
+      return price.amount ?? 0;
+    }
+    if (typeof price === "number") {
+      return price;
+    }
+    return parseFloat(String(price || 0)) || 0;
+  };
+
+  const basePrice = getPriceVal(product?.price);
+  const currentPrice = selectedVariant ? getPriceVal(selectedVariant.price) : basePrice;
+
+  const categoryName = typeof product?.category === "object" && product?.category !== null
+    ? (product.category as any).name || (product.category as any).id || ""
+    : product?.category || "";
   
   const formattedPrice = new Intl.NumberFormat("en-LK", {
     style: "currency",
@@ -168,7 +183,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <div className="flex flex-col justify-between space-y-4">
                   <div>
                     <span className="px-2.5 py-1 bg-kapruka-purple/10 text-kapruka-purple dark:bg-kapruka-purple/20 dark:text-purple-300 rounded-full text-xs font-bold uppercase tracking-wider">
-                      {product.category}
+                      {categoryName}
                     </span>
                     <h4 className="text-xl font-bold text-gray-900 dark:text-white mt-2 leading-snug">
                       {product.name}
@@ -200,7 +215,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                               {isSelected && <Check className="w-3.5 h-3.5" />}
                               <span>{v.name}</span>
                               <span className={`ml-1 opacity-70 ${isSelected ? "text-white" : "text-gray-500"}`}>
-                                (Rs {v.price.toLocaleString()})
+                                (Rs {getPriceVal(v.price).toLocaleString()})
                               </span>
                             </button>
                           );

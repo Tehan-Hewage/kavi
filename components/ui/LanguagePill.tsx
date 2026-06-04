@@ -16,7 +16,7 @@ export const LanguagePill: React.FC = () => {
   ];
 
   return (
-    <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
+    <div className="flex bg-gray-900 p-1 rounded-full border border-gray-800 shadow-sm">
       {options.map((opt) => {
         const isActive = language === opt.value;
         return (
@@ -26,7 +26,7 @@ export const LanguagePill: React.FC = () => {
             className={`relative px-3 py-1 text-xs font-semibold rounded-full transition-colors duration-200 ${
               isActive
                 ? "text-white"
-                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                : "text-gray-400 hover:text-white"
             }`}
           >
             {isActive && (
