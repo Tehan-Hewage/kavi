@@ -1,6 +1,6 @@
-# 🌸 Kavi (කවි) — Sri Lanka's Smarter AI Shopping Agent
+# 🌸 Kavi (කවි) - Sri Lanka's Smarter AI Shopping Agent
 
-Kavi (කවි — meaning "poet" in Sinhala) is an immersive, culturally-tuned multilingual AI shopping assistant designed to connect customers with the live **Kapruka** catalog. Built for the **Kapruka Agent Challenge 2026**, Kavi guides shoppers all the way from product discovery to guest checkout via a premium, responsive full-screen chat application.
+Kavi (කවි - meaning "poet" in Sinhala) is an immersive, culturally-tuned multilingual AI shopping assistant designed to connect customers with the live **Kapruka** catalog. Built for the **Kapruka Agent Challenge 2026**, Kavi guides shoppers all the way from product discovery to guest checkout via a premium, responsive full-screen chat application.
 
 ---
 
