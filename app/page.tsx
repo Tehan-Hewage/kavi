@@ -8,6 +8,9 @@ import { useLanguage } from "@/components/providers/LanguageProvider";
 import { useCart } from "@/components/providers/CartProvider";
 import { useCurrency } from "@/components/providers/CurrencyProvider";
 import { ChatMessage } from "@/lib/types";
+import { useTTS } from "@/hooks/useTTS";
+import { useMutePreference } from "@/hooks/useMutePreference";
+import { VoiceOrb } from "@/components/ui/VoiceOrb";
 
 const formatFriendlyError = (errorMsg: string): string => {
   const isCreditError = errorMsg.includes("credit balance") || errorMsg.includes("billing") || errorMsg.includes("400");
@@ -29,6 +32,11 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isThinking, setIsThinking] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+
+  // TTS + mute preference
+  const { speak, stop: stopSpeaking, isSpeaking } = useTTS();
+  const { muted } = useMutePreference();
+  const prevIsStreamingRef = useRef(false);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
 
   // Refs so sendMessage always reads the LATEST values, never stale closures
@@ -38,6 +46,26 @@ export default function ChatPage() {
   useEffect(() => { cartRef.current = cart; }, [cart]);
   useEffect(() => { currencyRef.current = currency; }, [currency]);
   useEffect(() => { languageRef.current = language; }, [language]);
+
+  // Speak the last assistant message when streaming finishes (and TTS is not muted)
+  useEffect(() => {
+    const wasStreaming = prevIsStreamingRef.current;
+    prevIsStreamingRef.current = isStreaming;
+
+    if (wasStreaming && !isStreaming && !muted) {
+      // Find the last assistant message with text content
+      const lastAssistant = [...messages].reverse().find(
+        (m) => m.role === "assistant" && m.content && m.content.trim().length > 0
+      );
+      if (lastAssistant?.content) {
+        speak(lastAssistant.content, languageRef.current);
+      }
+    }
+    // If user just muted mid-speech, stop
+    if (muted && isSpeaking) {
+      stopSpeaking();
+    }
+  }, [isStreaming, muted]);
 
   // Initialize and localize welcome message
   useEffect(() => {
@@ -380,6 +408,12 @@ export default function ChatPage() {
         onSend={sendMessage}
         isThinking={isThinking}
         onProceedToCheckout={() => sendMessage("I am ready to checkout.")}
+        voiceOrb={
+          <VoiceOrb
+            visible={isSpeaking}
+            onStop={stopSpeaking}
+          />
+        }
       >
         <MessageList
           messages={messages}

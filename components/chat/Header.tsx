@@ -2,11 +2,12 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Volume2, VolumeX } from "lucide-react";
 import { LanguagePill } from "../ui/LanguagePill";
 import { CurrencyPill } from "../ui/CurrencyPill";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { IconButton } from "../ui/buttons/IconButton";
+import { useMutePreference } from "@/hooks/useMutePreference";
 
 interface HeaderProps {
   cartCount: number;
@@ -14,6 +15,8 @@ interface HeaderProps {
 }
 
 export default function Header({ cartCount, onOpenCart }: HeaderProps) {
+  const { muted, toggleMute } = useMutePreference();
+
   return (
     <header
       className="flex-shrink-0 flex items-center justify-between px-3 sm:px-6 h-14 sm:h-16 z-50 min-w-0 w-full"
@@ -60,6 +63,22 @@ export default function Header({ cartCount, onOpenCart }: HeaderProps) {
 
         {/* Currency: always dropdown, flag-only on mobile */}
         <CurrencyPill />
+
+        {/* Mute / Unmute Kavi voice — always visible */}
+        <motion.button
+          whileHover={{ scale: 1.1, background: "rgba(255,255,255,0.2)" }}
+          whileTap={{ scale: 0.9 }}
+          onClick={toggleMute}
+          aria-label={muted ? "Unmute Kavi voice" : "Mute Kavi voice"}
+          title={muted ? "Kavi voice is muted — click to enable" : "Kavi voice is on — click to mute"}
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-200"
+          style={{ background: muted ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.15)" }}
+        >
+          {muted
+            ? <VolumeX size={16} className="text-white/50" />
+            : <Volume2 size={16} className="text-white" />
+          }
+        </motion.button>
 
         {/* Theme toggle — hidden on mobile to save space */}
         <div className="hidden sm:block">

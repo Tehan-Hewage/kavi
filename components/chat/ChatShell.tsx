@@ -13,6 +13,8 @@ interface ChatShellProps {
   isThinking?: boolean;
   activeChipContext?: "initial" | "afterSearch" | "afterCart" | "afterOrder";
   onProceedToCheckout?: () => void;
+  /** Optional VoiceOrb element to float above the input */
+  voiceOrb?: React.ReactNode;
 }
 
 export default function ChatShell({
@@ -21,6 +23,7 @@ export default function ChatShell({
   isThinking = false,
   activeChipContext = "initial",
   onProceedToCheckout,
+  voiceOrb,
 }: ChatShellProps) {
   const { cartCount } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -45,7 +48,11 @@ export default function ChatShell({
           chips={activeChips}
           onSelect={onSend}
         />
-        <ChatInput onSend={onSend} disabled={isThinking} />
+        {/* Input wrapper with VoiceOrb floating above */}
+        <div className="relative">
+          {voiceOrb}
+          <ChatInput onSend={onSend} disabled={isThinking} />
+        </div>
       </footer>
 
       {/* Cart Drawer */}
