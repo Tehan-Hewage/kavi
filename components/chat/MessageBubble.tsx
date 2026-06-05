@@ -10,7 +10,7 @@ import CategoryChips from "../ui/CategoryChips";
 import PayLinkCard from "../checkout/PayLinkCard";
 import StatusTimeline from "../ui/StatusTimeline";
 import CheckoutForm from "../checkout/CheckoutForm";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, Volume2, VolumeX } from "lucide-react";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -18,6 +18,8 @@ interface MessageBubbleProps {
   onOpenDetails?: (productId: string) => void;
   onSelectCategory?: (slug: string, name: string) => void;
   onSubmitCheckout?: (details: any) => void;
+  activeSpeakingId?: string | null;
+  onSpeak?: (text: string, messageId: string) => void;
 }
 
 const customBubbleVariants = {
@@ -34,6 +36,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onOpenDetails,
   onSelectCategory,
   onSubmitCheckout,
+  activeSpeakingId = null,
+  onSpeak,
 }) => {
   const hasRenderableContent = (msg: ChatMessage) => {
     if (msg.content && msg.content.trim() !== "") {
@@ -348,7 +352,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Center welcome card */}
         <div
-          className="w-full max-w-lg border rounded-2xl px-6 py-5"
+          className="w-full max-w-lg border rounded-2xl px-6 py-5 relative group"
           style={{
             borderColor: "var(--border-subtle)",
             background:  "var(--bg-surface)",
@@ -358,6 +362,26 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div className={`${fontClass} text-sm md:text-base font-medium leading-relaxed text-center`} style={{ color: "var(--text-primary)" }}>
             {renderMessageContent(message.content, true)}
           </div>
+
+          {/* Welcome card speak button */}
+          {!isStreaming && onSpeak && (
+            <button
+              onClick={() => onSpeak(message.content, message.id)}
+              className={`absolute bottom-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                activeSpeakingId === message.id
+                  ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                  : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.06] opacity-0 group-hover:opacity-100 focus:opacity-100"
+              }`}
+              title={activeSpeakingId === message.id ? "Stop speaking" : "Speak message"}
+              aria-label={activeSpeakingId === message.id ? "Stop speaking" : "Speak message"}
+            >
+              {activeSpeakingId === message.id ? (
+                <VolumeX size={15} className="animate-pulse" />
+              ) : (
+                <Volume2 size={15} />
+              )}
+            </button>
+          )}
         </div>
       </motion.div>
     );
@@ -385,34 +409,56 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         
         {/* Main Text Content */}
         {message.content && (
-          <div
-            className={`px-4 py-3 agent-bubble ${fontClass}`}
-            style={
-              isUser
-                ? {
-                    background:   "#4C1D6E",
-                    color:        "#FFFFFF",
-                    borderRadius: "20px 20px 4px 20px",
-                    boxShadow:    "0 2px 8px rgba(76,29,110,0.25)",
-                    fontSize:     "15px",
-                    lineHeight:   "1.65",
-                    maxWidth:     "100%",
-                  }
-                : {
-                    background:   "var(--card-bg)",
-                    color:        "var(--text-primary)",
-                    borderRadius: "4px 20px 20px 20px",
-                    boxShadow:    "var(--card-shadow)",
-                    borderLeft:   "3px solid #4C1D6E",
-                    fontSize:     "15px",
-                    lineHeight:   "1.65",
-                    maxWidth:     "100%",
-                  }
-            }
-          >
-            {renderMessageContent(message.content)}
-            {/* Streaming Cursor */}
-            {isStreaming && <span className="cursor-blink" />}
+          <div className="relative group/bubble flex items-start gap-2 max-w-full">
+            <div
+              className={`px-4 py-3 agent-bubble ${fontClass}`}
+              style={
+                isUser
+                  ? {
+                      background:   "#4C1D6E",
+                      color:        "#FFFFFF",
+                      borderRadius: "20px 20px 4px 20px",
+                      boxShadow:    "0 2px 8px rgba(76,29,110,0.25)",
+                      fontSize:     "15px",
+                      lineHeight:   "1.65",
+                      maxWidth:     "100%",
+                    }
+                  : {
+                      background:   "var(--card-bg)",
+                      color:        "var(--text-primary)",
+                      borderRadius: "4px 20px 20px 20px",
+                      boxShadow:    "var(--card-shadow)",
+                      borderLeft:   "3px solid #4C1D6E",
+                      fontSize:     "15px",
+                      lineHeight:   "1.65",
+                      maxWidth:     "100%",
+                    }
+              }
+            >
+              {renderMessageContent(message.content)}
+              {/* Streaming Cursor */}
+              {isStreaming && <span className="cursor-blink" />}
+            </div>
+
+            {/* TTS Speak Button */}
+            {!isUser && !isStreaming && onSpeak && (
+              <button
+                onClick={() => onSpeak(message.content, message.id)}
+                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 mt-2 ${
+                  activeSpeakingId === message.id
+                    ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                    : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.06]"
+                }`}
+                title={activeSpeakingId === message.id ? "Stop speaking" : "Speak message"}
+                aria-label={activeSpeakingId === message.id ? "Stop speaking" : "Speak message"}
+              >
+                {activeSpeakingId === message.id ? (
+                  <VolumeX size={15} className="animate-pulse" />
+                ) : (
+                  <Volume2 size={15} />
+                )}
+              </button>
+            )}
           </div>
         )}
 

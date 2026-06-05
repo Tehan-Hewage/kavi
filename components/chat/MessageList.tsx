@@ -12,6 +12,8 @@ interface MessageListProps {
   onOpenDetails?: (productId: string) => void;
   onSelectCategory?: (slug: string, name: string) => void;
   onSubmitCheckout?: (details: any) => void;
+  activeSpeakingId?: string | null;
+  onSpeak?: (text: string, messageId: string) => void;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -21,6 +23,8 @@ export const MessageList: React.FC<MessageListProps> = ({
   onOpenDetails,
   onSelectCategory,
   onSubmitCheckout,
+  activeSpeakingId = null,
+  onSpeak,
 }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -70,6 +74,8 @@ export const MessageList: React.FC<MessageListProps> = ({
             onOpenDetails={onOpenDetails}
             onSelectCategory={onSelectCategory}
             onSubmitCheckout={onSubmitCheckout}
+            activeSpeakingId={activeSpeakingId}
+            onSpeak={onSpeak}
           />
         );
       })}

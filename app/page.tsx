@@ -38,6 +38,23 @@ export default function ChatPage() {
   const { muted } = useMutePreference();
   const prevIsStreamingRef = useRef(false);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
+  const [activeSpeakingId, setActiveSpeakingId] = useState<string | null>(null);
+
+  // Reset activeSpeakingId when speaking stops
+  useEffect(() => {
+    if (!isSpeaking) {
+      setActiveSpeakingId(null);
+    }
+  }, [isSpeaking]);
+
+  const handleSpeak = (text: string, messageId: string) => {
+    if (activeSpeakingId === messageId && isSpeaking) {
+      stopSpeaking();
+    } else {
+      setActiveSpeakingId(messageId);
+      speak(text, languageRef.current);
+    }
+  };
 
   // Refs so sendMessage always reads the LATEST values, never stale closures
   const cartRef = useRef(cart);
@@ -58,6 +75,7 @@ export default function ChatPage() {
         (m) => m.role === "assistant" && m.content && m.content.trim().length > 0
       );
       if (lastAssistant?.content) {
+        setActiveSpeakingId(lastAssistant.id);
         speak(lastAssistant.content, languageRef.current);
       }
     }
@@ -422,6 +440,8 @@ export default function ChatPage() {
           onOpenDetails={handleOpenDetails}
           onSelectCategory={handleSelectCategory}
           onSubmitCheckout={handleSubmitCheckout}
+          activeSpeakingId={activeSpeakingId}
+          onSpeak={handleSpeak}
         />
       </ChatShell>
 
