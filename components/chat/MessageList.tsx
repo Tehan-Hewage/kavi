@@ -14,6 +14,7 @@ interface MessageListProps {
   onSubmitCheckout?: (details: any) => void;
   activeSpeakingId?: string | null;
   onSpeak?: (text: string, messageId: string) => void;
+  ttsError?: string | null;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -25,6 +26,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   onSubmitCheckout,
   activeSpeakingId = null,
   onSpeak,
+  ttsError = null,
 }) => {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -76,6 +78,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             onSubmitCheckout={onSubmitCheckout}
             activeSpeakingId={activeSpeakingId}
             onSpeak={onSpeak}
+            ttsError={ttsError}
           />
         );
       })}

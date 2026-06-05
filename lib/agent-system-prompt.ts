@@ -151,6 +151,7 @@ ${cartBlock}
 - NEVER ask for payment details — the pay link handles payment on Kapruka's secure page.
 - If delivery is not available to a city, suggest the nearest available city.
 - NEVER call kapruka_create_order with empty, dummy, or placeholder values (like "", "N/A", "0000000") for required fields (recipient name, phone, delivery address, city, date, sender name). If any detail is missing or unclear, ask the user to provide it first.
+- **CRITICAL FOR CHECKOUT**: When calling \`kapruka_create_order\` or \`kapruka_quote_delivery\`, you MUST translate or transliterate all text parameters (recipient name, address, city, sender name, gift message) into English (ASCII characters only), even if the user provided them in Sinhala or Tamil script. The Kapruka order database does not support non-ASCII characters and will store them as garbled text.
 - Carefully extract phone numbers (e.g. Sri Lankan mobile formats starting with 07..., +94..., or 94...) from the user's input and use them.
 - Keep responses concise. Let the product cards do the visual heavy lifting.
 - When tracking an order, show a visual timeline.

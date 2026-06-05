@@ -34,9 +34,8 @@ export default function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false);
 
   // TTS + mute preference
-  const { speak, stop: stopSpeaking, isSpeaking } = useTTS();
+  const { speak, stop: stopSpeaking, isSpeaking, error: ttsError } = useTTS();
   const { muted } = useMutePreference();
-  const prevIsStreamingRef = useRef(false);
   const [activeProductId, setActiveProductId] = useState<string | null>(null);
   const [activeSpeakingId, setActiveSpeakingId] = useState<string | null>(null);
 
@@ -64,26 +63,12 @@ export default function ChatPage() {
   useEffect(() => { currencyRef.current = currency; }, [currency]);
   useEffect(() => { languageRef.current = language; }, [language]);
 
-  // Speak the last assistant message when streaming finishes (and TTS is not muted)
+  // If user just muted mid-speech, stop
   useEffect(() => {
-    const wasStreaming = prevIsStreamingRef.current;
-    prevIsStreamingRef.current = isStreaming;
-
-    if (wasStreaming && !isStreaming && !muted) {
-      // Find the last assistant message with text content
-      const lastAssistant = [...messages].reverse().find(
-        (m) => m.role === "assistant" && m.content && m.content.trim().length > 0
-      );
-      if (lastAssistant?.content) {
-        setActiveSpeakingId(lastAssistant.id);
-        speak(lastAssistant.content, languageRef.current);
-      }
-    }
-    // If user just muted mid-speech, stop
     if (muted && isSpeaking) {
       stopSpeaking();
     }
-  }, [isStreaming, muted]);
+  }, [muted, isSpeaking, stopSpeaking]);
 
   // Initialize and localize welcome message
   useEffect(() => {
@@ -442,6 +427,7 @@ export default function ChatPage() {
           onSubmitCheckout={handleSubmitCheckout}
           activeSpeakingId={activeSpeakingId}
           onSpeak={handleSpeak}
+          ttsError={ttsError}
         />
       </ChatShell>
 

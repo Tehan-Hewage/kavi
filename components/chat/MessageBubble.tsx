@@ -20,6 +20,7 @@ interface MessageBubbleProps {
   onSubmitCheckout?: (details: any) => void;
   activeSpeakingId?: string | null;
   onSpeak?: (text: string, messageId: string) => void;
+  ttsError?: string | null;
 }
 
 const customBubbleVariants = {
@@ -38,6 +39,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onSubmitCheckout,
   activeSpeakingId = null,
   onSpeak,
+  ttsError = null,
 }) => {
   const hasRenderableContent = (msg: ChatMessage) => {
     if (msg.content && msg.content.trim() !== "") {
@@ -369,14 +371,32 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               onClick={() => onSpeak(message.content, message.id)}
               className={`absolute bottom-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                 activeSpeakingId === message.id
-                  ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                  ? ttsError
+                    ? "bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400"
+                    : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
                   : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.06] opacity-0 group-hover:opacity-100 focus:opacity-100"
               }`}
-              title={activeSpeakingId === message.id ? "Stop speaking" : "Speak message"}
-              aria-label={activeSpeakingId === message.id ? "Stop speaking" : "Speak message"}
+              title={
+                activeSpeakingId === message.id
+                  ? ttsError
+                    ? ttsError
+                    : "Stop speaking"
+                  : "Speak message"
+              }
+              aria-label={
+                activeSpeakingId === message.id
+                  ? ttsError
+                    ? ttsError
+                    : "Stop speaking"
+                  : "Speak message"
+              }
             >
               {activeSpeakingId === message.id ? (
-                <VolumeX size={15} className="animate-pulse" />
+                ttsError ? (
+                  <AlertCircle size={15} className="text-rose-600 dark:text-rose-400" />
+                ) : (
+                  <VolumeX size={15} className="animate-pulse" />
+                )
               ) : (
                 <Volume2 size={15} />
               )}
@@ -446,14 +466,32 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 onClick={() => onSpeak(message.content, message.id)}
                 className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 mt-2 ${
                   activeSpeakingId === message.id
-                    ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                    ? ttsError
+                      ? "bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400"
+                      : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
                     : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.06]"
                 }`}
-                title={activeSpeakingId === message.id ? "Stop speaking" : "Speak message"}
-                aria-label={activeSpeakingId === message.id ? "Stop speaking" : "Speak message"}
+                title={
+                  activeSpeakingId === message.id
+                    ? ttsError
+                      ? ttsError
+                      : "Stop speaking"
+                    : "Speak message"
+                }
+                aria-label={
+                  activeSpeakingId === message.id
+                    ? ttsError
+                      ? ttsError
+                      : "Stop speaking"
+                    : "Speak message"
+                }
               >
                 {activeSpeakingId === message.id ? (
-                  <VolumeX size={15} className="animate-pulse" />
+                  ttsError ? (
+                    <AlertCircle size={15} className="text-rose-600 dark:text-rose-400" />
+                  ) : (
+                    <VolumeX size={15} className="animate-pulse" />
+                  )
                 ) : (
                   <Volume2 size={15} />
                 )}
