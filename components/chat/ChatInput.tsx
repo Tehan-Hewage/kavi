@@ -1,288 +1,117 @@
 "use client";
-
-import React, { useRef, useState, useEffect } from "react";
-import { useLanguage } from "@/components/providers/LanguageProvider";
-import { ArrowUp, Mic, MicOff, WifiOff } from "lucide-react";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useVoice } from "@/hooks/useVoice";
+import { ArrowUp, Loader2, Volume2, VolumeX } from "lucide-react";
+import VoiceButton   from "@/components/voice/VoiceButton";
+import VoiceWaveform from "@/components/voice/VoiceWaveform";
+import { useGeminiLive } from "@/hooks/useGeminiLive";
+import { CartItem } from "@/types/cart";
 
-interface ChatInputProps {
-  onSend: (text: string) => void;
+interface Props {
+  onSend:    (text: string) => void;
+  isLoading?: boolean;
   disabled?: boolean;
+  language?:  string;
+  cart?:      CartItem[];
 }
 
-export const ChatInput: React.FC<ChatInputProps> = ({
+export default function ChatInput({
   onSend,
+  isLoading = false,
   disabled = false,
-}) => {
-  const { t, language } = useLanguage();
+  language = "en",
+  cart = [],
+}: Props) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  // Only reveal mic button after client-side mount to avoid SSR hydration mismatch
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
 
-  // Local error display state — auto-clears after 3 s
-  const [showError, setShowError] = useState(false);
-  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isReallyLoading = isLoading || disabled;
 
-  // Voice hook — transcript auto-fills and submits
-  const { isListening, isTranscribing, errorMsg, startListening, stopListening, supported: voiceSupported, clearError } =
-    useVoice({
-      language,
-      onTranscript: (text: string) => {
-        setValue(text);
-        setTimeout(() => {
-          onSend(text);
-          setValue("");
-        }, 0);
-      },
-    });
+  const {
+    state: voiceState, startSession, stopSession, interrupt,
+    audioLevel, lastTranscript, isEnabled, setEnabled,
+  } = useGeminiLive(language, cart, onSend);
 
-  // When errorMsg appears, briefly show the error badge then auto-dismiss
-  useEffect(() => {
-    if (errorMsg) {
-      setShowError(true);
-      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-      errorTimerRef.current = setTimeout(() => {
-        setShowError(false);
-        clearError();
-      }, 3500);
-    }
-    return () => {
-      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-    };
-  }, [errorMsg, clearError]);
-
-  // Auto-resize textarea height
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${Math.min(
-        textareaRef.current.scrollHeight,
-        160
-      )}px`;
-    }
-  }, [value]);
-
-  const handleSubmit = () => {
-    if (!value.trim() || disabled) return;
-    onSend(value);
-    setValue("");
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
-  const handleMicClick = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      setShowError(false);
-      startListening();
-    }
-  };
-
-  const isEmpty = !value.trim();
-  const canSend = !isEmpty && !disabled && !isListening && !isTranscribing;
-  const isLoading = disabled;
-
-  // Derive a short user-friendly error label
-  const shortError =
-    errorMsg?.includes("denied") ? "Mic access denied" :
-    errorMsg?.includes("network") || errorMsg?.includes("Network") ? "Network error — tap to retry" :
-    errorMsg ? "Voice error — tap to retry" : null;
+  const isListening = voiceState === "listening";
 
   return (
-    <div
-      className="flex items-center gap-2 p-3 border shadow-sm transition-all duration-200"
-      style={{
-        background:   "var(--bg-surface)",
-        borderColor:  isListening ? "#e74c3c" : showError ? "#e67e22" : "var(--input-border)",
-        borderRadius: "20px",
-        boxShadow: isListening
-          ? "0 0 0 3px rgba(231,76,60,0.25)"
-          : showError
-          ? "0 0 0 2px rgba(230,126,34,0.2)"
-          : undefined,
-        transition: "border-color 0.25s, box-shadow 0.25s",
-      }}
-      onFocus={() => {
-        if (textareaRef.current && !isListening) {
-          const el = textareaRef.current.parentElement!;
-          el.style.borderColor = "var(--input-focus-border)";
-          el.style.boxShadow = "var(--input-focus-shadow)";
-        }
-      }}
-      onBlur={() => {
-        if (textareaRef.current && !isListening) {
-          const el = textareaRef.current.parentElement!;
-          el.style.borderColor = "var(--input-border)";
-          el.style.boxShadow = "none";
-        }
-      }}
-    >
-      {/* Mic button — only shown on client after mount (avoids SSR hydration mismatch) */}
-      {mounted && voiceSupported && (
-        <div className="relative flex-shrink-0">
-          <motion.button
-            whileHover={{ scale: isTranscribing ? 1 : 1.05 }}
-            whileTap={{ scale: isTranscribing ? 1 : 0.9 }}
-            onClick={handleMicClick}
-            disabled={disabled || isTranscribing}
-            aria-label={isListening ? "Stop recording" : isTranscribing ? "Transcribing…" : "Start voice input"}
-            className="w-9 h-9 rounded-full flex items-center justify-center relative disabled:cursor-not-allowed"
-            style={{
-              background: isListening
-                ? "rgba(231,76,60,0.12)"
-                : isTranscribing
-                ? "rgba(76,29,110,0.12)"
-                : showError
-                ? "rgba(230,126,34,0.1)"
-                : "var(--bg-muted, rgba(0,0,0,0.06))",
-              transition: "background 0.2s",
-            }}
-          >
-            {/* Pulsing ring while recording */}
-            {isListening && (
-              <motion.span
-                className="absolute inset-0 rounded-full border-2 border-red-400"
-                animate={{ scale: [1, 1.5, 1], opacity: [0.7, 0, 0.7] }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-              />
-            )}
-            <AnimatePresence mode="wait">
-              {isTranscribing ? (
-                <motion.span
-                  key="mic-transcribing"
-                  initial={{ scale: 0.7, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.7, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {/* Tiny spinner while Gemini transcribes */}
-                  <motion.span
-                    className="block w-4 h-4 border-2 rounded-full border-purple-400/30 border-t-purple-500"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
-                  />
-                </motion.span>
-              ) : showError ? (
-                <motion.span
-                  key="mic-error"
-                  initial={{ scale: 0.7, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.7, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <WifiOff size={15} className="text-orange-400" />
-                </motion.span>
-              ) : isListening ? (
-                <motion.span
-                  key="mic-on"
-                  initial={{ scale: 0.7, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.7, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <MicOff size={16} className="text-red-500" />
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="mic-off"
-                  initial={{ scale: 0.7, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.7, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <Mic size={16} style={{ color: "var(--text-secondary, #888)" }} />
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
+    <div className="px-3 py-3 border-t" style={{ borderColor: "var(--border-subtle)" }}>
+      <AnimatePresence mode="wait">
 
-          {/* Error tooltip — floats above the mic button, auto-dismisses */}
-          <AnimatePresence>
-            {showError && shortError && (
-              <motion.div
-                initial={{ opacity: 0, y: 6, scale: 0.92 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 6, scale: 0.92 }}
-                transition={{ duration: 0.18 }}
-                className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-xl pointer-events-none z-50"
-                style={{
-                  background: "rgba(230,126,34,0.92)",
-                  color: "#fff",
-                  backdropFilter: "blur(8px)",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                }}
-              >
-                {shortError}
-                {/* Arrow */}
-                <span
-                  className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent"
-                  style={{ borderTopColor: "rgba(230,126,34,0.92)" }}
-                />
-              </motion.div>
+        {isListening ? (
+          <motion.div key="wave"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="flex items-center h-12 rounded-2xl px-4 gap-3"
+            style={{ background: "var(--input-bg)", border: "1.5px solid #1A7A4A" }}>
+            <VoiceWaveform audioLevel={audioLevel} isActive={true} />
+            {lastTranscript && (
+              <span className="text-xs truncate flex-1" style={{ color: "var(--text-secondary)" }}>
+                {lastTranscript}
+              </span>
             )}
-          </AnimatePresence>
-        </div>
-      )}
+            <VoiceButton state={voiceState} audioLevel={audioLevel}
+              onStart={startSession} onStop={stopSession} onInterrupt={interrupt}
+              isEnabled={isEnabled} onToggleMute={() => setEnabled(!isEnabled)} />
+          </motion.div>
+        ) : (
+          <motion.div key="text"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="flex items-end gap-2 rounded-2xl px-3 py-2.5"
+            style={{ background: "var(--input-bg)", border: "1.5px solid var(--input-border)" }}>
 
-      <textarea
-        ref={textareaRef}
-        rows={1}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        disabled={disabled || isListening}
-        placeholder={isTranscribing ? "Transcribing…" : isListening ? "Listening… speak now 🎙" : t.placeholder}
-        className="flex-1 max-h-40 bg-transparent resize-none border-0 text-sm font-semibold focus:outline-none focus:ring-0 py-1 px-2 no-scrollbar"
-        style={{
-          color: isListening ? "var(--text-secondary)" : "var(--text-primary)",
-          transition: "color 0.2s",
-        }}
-      />
-      <motion.button
-        whileHover={canSend ? {
-          scale:     1.08,
-          boxShadow: "0 4px 16px rgba(76,29,110,0.4)",
-        } : {}}
-        whileTap={canSend ? { scale: 0.9 } : {}}
-        animate={canSend ? {
-          background: ["#4C1D6E", "#6B2D96", "#4C1D6E"],
-        } : { background: "#D6D6D6" }}
-        transition={canSend
-          ? { background: { duration: 3, repeat: Infinity } }
-          : { duration: 0.2 }
-        }
-        onClick={handleSubmit}
-        disabled={!canSend}
-        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center disabled:cursor-not-allowed"
-      >
-        <AnimatePresence mode="wait">
-          {isLoading ? (
-            <motion.div key="spinner"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }}
-              className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+            <textarea ref={textareaRef} value={value}
+              onChange={e => {
+                setValue(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+              }}
+              onKeyDown={e => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (value.trim() && !isReallyLoading) { onSend(value.trim()); setValue(""); }
+                }
+              }}
+              placeholder="What are you shopping for? Or tap 🎤 to talk..."
+              rows={1} disabled={isReallyLoading}
+              className="flex-1 resize-none outline-none bg-transparent text-sm leading-relaxed"
+              style={{ color: "var(--text-primary)", minHeight: "24px", maxHeight: "120px" }}
             />
-          ) : (
-            <motion.div key="arrow"
-              initial={{ y: 4, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{    y: -4, opacity: 0 }}
-            >
-              <ArrowUp size={18} className="text-white" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.button>
+
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <motion.button whileTap={{ scale: 0.88 }} onClick={() => setEnabled(!isEnabled)}
+                className="w-8 h-8 rounded-full flex items-center justify-center" title={isEnabled ? "Mute Kavi" : "Unmute Kavi"}>
+                {isEnabled
+                  ? <Volume2 size={15} style={{ color: "var(--k-purple)" }} />
+                  : <VolumeX size={15} style={{ color: "var(--text-tertiary)" }} />}
+              </motion.button>
+
+              <VoiceButton state={voiceState} audioLevel={audioLevel}
+                onStart={startSession} onStop={stopSession} onInterrupt={interrupt}
+                isEnabled={isEnabled} onToggleMute={() => setEnabled(!isEnabled)} />
+
+              <motion.button
+                aria-label="Send message"
+                animate={{ background: value.trim() && !isReallyLoading ? "#4C1D6E" : "#D1D1D1" }}
+                whileTap={value.trim() && !isReallyLoading ? { scale: 0.9 } : {}}
+                onClick={() => {
+                  if (value.trim() && !isReallyLoading) { onSend(value.trim()); setValue(""); }
+                }}
+                disabled={!value.trim() || isReallyLoading}
+                className="w-10 h-10 rounded-full flex items-center justify-center">
+                <AnimatePresence mode="wait">
+                  {isReallyLoading
+                    ? <Loader2 key="s" size={16} className="text-white animate-spin" />
+                    : <ArrowUp  key="a" size={18} className="text-white" />}
+                </AnimatePresence>
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <p className="text-[10px] text-center mt-1.5" style={{ color: "var(--text-tertiary)" }}>
+        Tap 🎤 to talk · Tap again to interrupt · 🔊 to mute
+      </p>
     </div>
   );
-};
-export default ChatInput;
+}

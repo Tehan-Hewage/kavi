@@ -19,7 +19,7 @@ describe("ChatInput", () => {
 
   it("renders send button", () => {
     renderInput();
-    expect(screen.getByRole("button")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /send/i })).toBeInTheDocument();
   });
 
   it("calls onSend when Enter is pressed", async () => {
@@ -48,13 +48,13 @@ describe("ChatInput", () => {
 
   it("send button is disabled when input is empty", () => {
     renderInput();
-    const btn = screen.getByRole("button");
+    const btn = screen.getByRole("button", { name: /send/i });
     expect(btn).toBeDisabled();
   });
 
   it("send button is disabled while loading", () => {
     renderInput(vi.fn(), true);
-    const btn = screen.getByRole("button");
+    const btn = screen.getByRole("button", { name: /send/i });
     expect(btn).toBeDisabled();
   });
 
