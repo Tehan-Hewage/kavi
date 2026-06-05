@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const model = "gemini-3.1-flash-tts-preview";
+const model = "gemini-2.5-flash-preview-tts";
 
 function cleanAndFormatSpeechText(text: string, language: string): string {
   // 1. Clean markdown formatting
