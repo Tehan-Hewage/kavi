@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { useLanguage } from "@/components/providers/LanguageProvider";
-import { ArrowUp, Mic, MicOff } from "lucide-react";
+import { ArrowUp, Mic, MicOff, WifiOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useVoice } from "@/hooks/useVoice";
 
@@ -22,13 +22,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
+  // Local error display state — auto-clears after 3 s
+  const [showError, setShowError] = useState(false);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Voice hook — transcript auto-fills and submits
-  const { status: voiceStatus, isListening, errorMsg, startListening, stopListening, supported: voiceSupported } =
+  const { isListening, errorMsg, startListening, stopListening, supported: voiceSupported, clearError } =
     useVoice({
       language,
       onTranscript: (text: string) => {
-        // Fill textarea and immediately send
         setValue(text);
         setTimeout(() => {
           onSend(text);
@@ -36,6 +38,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         }, 0);
       },
     });
+
+  // When errorMsg appears, briefly show the error badge then auto-dismiss
+  useEffect(() => {
+    if (errorMsg) {
+      setShowError(true);
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+      errorTimerRef.current = setTimeout(() => {
+        setShowError(false);
+        clearError();
+      }, 3500);
+    }
+    return () => {
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    };
+  }, [errorMsg, clearError]);
 
   // Auto-resize textarea height
   useEffect(() => {
@@ -65,6 +82,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     if (isListening) {
       stopListening();
     } else {
+      setShowError(false);
       startListening();
     }
   };
@@ -72,22 +90,26 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const isEmpty = !value.trim();
   const canSend = !isEmpty && !disabled && !isListening;
   const isLoading = disabled;
-  const placeholderText = isListening
-    ? "Listening… speak now 🎙"
-    : errorMsg
-    ? errorMsg
-    : t.placeholder;
+
+  // Derive a short user-friendly error label
+  const shortError =
+    errorMsg?.includes("denied") ? "Mic access denied" :
+    errorMsg?.includes("network") || errorMsg?.includes("Network") ? "Network error — tap to retry" :
+    errorMsg ? "Voice error — tap to retry" : null;
 
   return (
     <div
       className="flex items-center gap-2 p-3 border shadow-sm transition-all duration-200"
       style={{
         background:   "var(--bg-surface)",
-        borderColor:  isListening ? "#e74c3c" : "var(--input-border)",
+        borderColor:  isListening ? "#e74c3c" : showError ? "#e67e22" : "var(--input-border)",
         borderRadius: "20px",
         boxShadow: isListening
           ? "0 0 0 3px rgba(231,76,60,0.25)"
+          : showError
+          ? "0 0 0 2px rgba(230,126,34,0.2)"
           : undefined,
+        transition: "border-color 0.25s, box-shadow 0.25s",
       }}
       onFocus={() => {
         if (textareaRef.current && !isListening) {
@@ -106,52 +128,92 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     >
       {/* Mic button — only shown on client after mount (avoids SSR hydration mismatch) */}
       {mounted && voiceSupported && (
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={handleMicClick}
-          disabled={disabled}
-          aria-label={isListening ? "Stop listening" : "Start voice input"}
-          className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center relative disabled:cursor-not-allowed disabled:opacity-50"
-          style={{
-            background: isListening
-              ? "rgba(231,76,60,0.12)"
-              : "var(--bg-muted, rgba(0,0,0,0.06))",
-            transition: "background 0.2s",
-          }}
-        >
-          {/* Pulsing ring while listening */}
-          {isListening && (
-            <motion.span
-              className="absolute inset-0 rounded-full border-2 border-red-400"
-              animate={{ scale: [1, 1.5, 1], opacity: [0.7, 0, 0.7] }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-            />
-          )}
-          <AnimatePresence mode="wait">
-            {isListening ? (
+        <div className="relative flex-shrink-0">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleMicClick}
+            disabled={disabled}
+            aria-label={isListening ? "Stop listening" : "Start voice input"}
+            className="w-9 h-9 rounded-full flex items-center justify-center relative disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              background: isListening
+                ? "rgba(231,76,60,0.12)"
+                : showError
+                ? "rgba(230,126,34,0.1)"
+                : "var(--bg-muted, rgba(0,0,0,0.06))",
+              transition: "background 0.2s",
+            }}
+          >
+            {/* Pulsing ring while listening */}
+            {isListening && (
               <motion.span
-                key="mic-on"
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.7, opacity: 0 }}
-                transition={{ duration: 0.15 }}
+                className="absolute inset-0 rounded-full border-2 border-red-400"
+                animate={{ scale: [1, 1.5, 1], opacity: [0.7, 0, 0.7] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+              />
+            )}
+            <AnimatePresence mode="wait">
+              {showError ? (
+                <motion.span
+                  key="mic-error"
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.7, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <WifiOff size={15} className="text-orange-400" />
+                </motion.span>
+              ) : isListening ? (
+                <motion.span
+                  key="mic-on"
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.7, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <MicOff size={16} className="text-red-500" />
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="mic-off"
+                  initial={{ scale: 0.7, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.7, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <Mic size={16} style={{ color: "var(--text-secondary, #888)" }} />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
+
+          {/* Error tooltip — floats above the mic button, auto-dismisses */}
+          <AnimatePresence>
+            {showError && shortError && (
+              <motion.div
+                initial={{ opacity: 0, y: 6, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 6, scale: 0.92 }}
+                transition={{ duration: 0.18 }}
+                className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-xl pointer-events-none z-50"
+                style={{
+                  background: "rgba(230,126,34,0.92)",
+                  color: "#fff",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                }}
               >
-                <MicOff size={16} className="text-red-500" />
-              </motion.span>
-            ) : (
-              <motion.span
-                key="mic-off"
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.7, opacity: 0 }}
-                transition={{ duration: 0.15 }}
-              >
-                <Mic size={16} style={{ color: "var(--text-secondary, #888)" }} />
-              </motion.span>
+                {shortError}
+                {/* Arrow */}
+                <span
+                  className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent"
+                  style={{ borderTopColor: "rgba(230,126,34,0.92)" }}
+                />
+              </motion.div>
             )}
           </AnimatePresence>
-        </motion.button>
+        </div>
       )}
 
       <textarea
@@ -161,7 +223,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         disabled={disabled || isListening}
-        placeholder={placeholderText}
+        placeholder={isListening ? "Listening… speak now 🎙" : t.placeholder}
         className="flex-1 max-h-40 bg-transparent resize-none border-0 text-sm font-semibold focus:outline-none focus:ring-0 py-1 px-2 no-scrollbar"
         style={{
           color: isListening ? "var(--text-secondary)" : "var(--text-primary)",
