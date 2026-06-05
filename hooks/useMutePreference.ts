@@ -5,14 +5,17 @@ import { useState, useEffect, useCallback } from "react";
 const STORAGE_KEY = "kavi-tts-muted";
 
 export function useMutePreference() {
-  const [muted, setMuted] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
+  // Always start as false (SSR-safe). Read localStorage only after mount.
+  const [muted, setMuted] = useState<boolean>(false);
+
+  useEffect(() => {
     try {
-      return localStorage.getItem(STORAGE_KEY) === "true";
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === "true") setMuted(true);
     } catch {
-      return false;
+      // ignore storage errors
     }
-  });
+  }, []);
 
   // Keep localStorage in sync whenever muted changes
   useEffect(() => {

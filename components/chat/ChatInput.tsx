@@ -18,6 +18,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const { t, language } = useLanguage();
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Only reveal mic button after client-side mount to avoid SSR hydration mismatch
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
 
   // Voice hook — transcript auto-fills and submits
   const { status: voiceStatus, isListening, errorMsg, startListening, stopListening, supported: voiceSupported } =
@@ -100,8 +104,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         }
       }}
     >
-      {/* Mic button — show only when supported */}
-      {voiceSupported && (
+      {/* Mic button — only shown on client after mount (avoids SSR hydration mismatch) */}
+      {mounted && voiceSupported && (
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.9 }}
