@@ -1,18 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const model = "gemini-2.5-flash-preview-tts";
+const model = "gemini-3.1-flash-tts-preview";
 
-function cleanMarkdown(text: string): string {
-  return text
+function cleanAndFormatSpeechText(text: string, language: string): string {
+  // 1. Clean markdown formatting
+  let cleaned = text
     .replace(/\*\*(.*?)\*\*/g, "$1")         // bold
     .replace(/\*(.*?)\*/g, "$1")             // italic
     .replace(/`{1,3}[^`]*`{1,3}/g, "")       // code blocks/inline code
     .replace(/#{1,6}\s/g, "")                // headers
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // links
     .replace(/^\s*[-*+]\s+/gm, "")           // bullet lists
-    .replace(/\s{2,}/g, " ")                 // collapse duplicate whitespace
-    .trim();
+    .replace(/\s{2,}/g, " ");                // collapse duplicate whitespace
+
+  // 2. Remove emojis using Unicode property escape
+  cleaned = cleaned.replace(new RegExp("\\p{Extended_Pictographic}", "gu"), "");
+
+  // 3. Pronounce currencies based on language context
+  if (language === "si") {
+    cleaned = cleaned
+      .replace(/\b(Rs\.?|LKR)\b/gi, "රුපියල්")
+      .replace(/\bUSD\b/gi, "ඩොලර්")
+      .replace(/\$/g, "ඩොලර්");
+  } else if (language === "ta" || language === "tanglish") {
+    cleaned = cleaned
+      .replace(/\b(Rs\.?|LKR)\b/gi, "ரூபாய்")
+      .replace(/\bUSD\b/gi, "டாலர்")
+      .replace(/\$/g, "டாலர்");
+  } else {
+    cleaned = cleaned
+      .replace(/\b(Rs\.?|LKR)\b/gi, "rupees")
+      .replace(/\bUSD\b/gi, "dollars")
+      .replace(/\$/g, "dollars");
+  }
+
+  return cleaned.trim();
 }
 
 function createWavHeader(dataLength: number, sampleRate = 24000, numChannels = 1, bitsPerSample = 16) {
@@ -42,13 +65,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { text } = await request.json();
+    const { text, language = "en" } = await request.json();
 
     if (!text || !text.trim()) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
-    const cleanedText = cleanMarkdown(text);
+    const cleanedText = cleanAndFormatSpeechText(text, language);
     if (!cleanedText) {
       return NextResponse.json({ error: "Text is empty after cleaning" }, { status: 400 });
     }
