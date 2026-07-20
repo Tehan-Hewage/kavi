@@ -6,7 +6,6 @@ import Header from "./Header";
 import CartDrawer from "../cart/CartDrawer";
 import SuggestionChips, { CHIP_SETS } from "../ui/SuggestionChips";
 import ChatInput from "./ChatInput";
-import { CartItem } from "@/types/cart";
 
 interface ChatShellProps {
   children: React.ReactNode;
@@ -16,8 +15,6 @@ interface ChatShellProps {
   onProceedToCheckout?: () => void;
   /** Optional VoiceOrb element to float above the input */
   voiceOrb?: React.ReactNode;
-  language: string;
-  cart: CartItem[];
 }
 
 export default function ChatShell({
@@ -27,8 +24,6 @@ export default function ChatShell({
   activeChipContext = "initial",
   onProceedToCheckout,
   voiceOrb,
-  language,
-  cart,
 }: ChatShellProps) {
   const { cartCount } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -56,7 +51,7 @@ export default function ChatShell({
         {/* Input wrapper with VoiceOrb floating above */}
         <div className="relative">
           {voiceOrb}
-          <ChatInput onSend={onSend} isLoading={isThinking} language={language} cart={cart} />
+          <ChatInput onSend={onSend} disabled={isThinking} />
         </div>
       </footer>
 

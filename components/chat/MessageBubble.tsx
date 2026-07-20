@@ -31,6 +31,20 @@ const customBubbleVariants = {
   },
 };
 
+export const cleanMessageText = (text: string): string => {
+  if (!text) return "";
+  // Strip standalone bracket placeholders like [Product Gallery] but keep [checkout-form]
+  let cleaned = text.replace(/\[\s*(?!\s*checkout-form\s*)[^\]]+\](?!\()/gi, "");
+  
+  // Clean up "Link: " prefixes from markdown links (both inside and outside brackets)
+  cleaned = cleaned.replace(/\[\s*link\s*:\s*/gi, "[");
+  cleaned = cleaned.replace(/\bLink\s*:\s*(?=\[[^\]]+\]\([^)]+\))/gi, "");
+
+  // Replace 3 or more consecutive newlines with 2 newlines
+  cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
+  return cleaned.trim();
+};
+
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   isStreaming = false,
@@ -160,10 +174,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
   // Parse text message and replace `[checkout-form]` with the form component
   const renderMessageContent = (text: string, alignCenter = false) => {
-    if (!text) return null;
+    const cleanedText = cleanMessageText(text);
+    if (!cleanedText) return null;
 
-    if (text.includes("[checkout-form]")) {
-      const parts = text.split("[checkout-form]");
+    if (cleanedText.includes("[checkout-form]")) {
+      const parts = cleanedText.split("[checkout-form]");
       return (
         <div className="space-y-3 w-full">
           {parts[0] && <div className="leading-relaxed">{parseMarkdown(parts[0], alignCenter)}</div>}
@@ -175,7 +190,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       );
     }
 
-    return parseMarkdown(text, alignCenter);
+    return parseMarkdown(cleanedText, alignCenter);
   };
 
   const renderToolResult = (tool: string, result: any, input: any) => {
@@ -368,7 +383,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           {/* Welcome card speak button */}
           {!isStreaming && onSpeak && (
             <button
-              onClick={() => onSpeak(message.content, message.id)}
+              onClick={() => onSpeak(cleanMessageText(message.content), message.id)}
               className={`absolute bottom-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                 activeSpeakingId === message.id
                   ? ttsError
@@ -463,7 +478,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             {/* TTS Speak Button */}
             {!isUser && !isStreaming && onSpeak && (
               <button
-                onClick={() => onSpeak(message.content, message.id)}
+                onClick={() => onSpeak(cleanMessageText(message.content), message.id)}
                 className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 mt-2 ${
                   activeSpeakingId === message.id
                     ? ttsError

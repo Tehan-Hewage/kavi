@@ -4,8 +4,11 @@ const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const model = "gemini-2.5-flash-preview-tts";
 
 function cleanAndFormatSpeechText(text: string, language: string): string {
-  // 1. Clean markdown formatting
+  // 1. Clean markdown formatting and strip standalone bracket tags
   let cleaned = text
+    .replace(/\[\s*link\s*:\s*/gi, "[")
+    .replace(/\bLink\s*:\s*(?=\[[^\]]+\]\([^)]+\))/gi, "")
+    .replace(/\[[^\]]+\](?!\()/g, "")       // remove standalone bracket tags like [Product Gallery] or [checkout-form]
     .replace(/\*\*(.*?)\*\*/g, "$1")         // bold
     .replace(/\*(.*?)\*/g, "$1")             // italic
     .replace(/`{1,3}[^`]*`{1,3}/g, "")       // code blocks/inline code

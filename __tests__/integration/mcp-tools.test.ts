@@ -1,10 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { callMcpTool } from "@/lib/mcp-tools";
 import { server } from "@/__mocks__/kapruka-mcp";
 import { errorHandlers } from "@/__mocks__/kapruka-mcp";
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, passthrough } from "msw";
 
 describe("MCP Tool Wrappers", () => {
+  afterEach(() => {
+    server.resetHandlers();
+  });
 
   describe("kapruka_search_products", () => {
     it("returns an array of products", async () => {
@@ -195,6 +198,39 @@ describe("MCP Tool Wrappers", () => {
       await expect(
         callMcpTool("kapruka_search_products", { query: "cake" })
       ).rejects.toThrow();
+    });
+  });
+
+  describe("Garbled text sanitization", () => {
+    it("cleans garbled en-dashes and decodes standard HTML entities in MCP tool results", async () => {
+      server.use(
+        http.post("https://mcp.kapruka.com/mcp", async ({ request }) => {
+          const body = await request.clone().json() as { id?: any; method?: string; params?: { name?: string } };
+          if (body.method === "tools/call" && body.params?.name === "kapruka_search_products") {
+            return HttpResponse.json({
+              jsonrpc: "2.0",
+              id: body.id,
+              result: {
+                content: [
+                  {
+                    type: "text",
+                    text: JSON.stringify({
+                      id: "roses-1",
+                      name: "Midnight Romance N#226;n#8364;n#8211; 24 Red Roses",
+                      description: "Lovely flowers &amp; roses for your lover&#39;s day",
+                    }),
+                  },
+                ],
+              },
+            });
+          }
+          return;
+        })
+      );
+
+      const result = await callMcpTool("kapruka_search_products", { query: "roses" }) as any;
+      expect(result.name).toBe("Midnight Romance - 24 Red Roses");
+      expect(result.description).toBe("Lovely flowers & roses for your lover's day");
     });
   });
 });

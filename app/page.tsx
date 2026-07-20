@@ -411,8 +411,6 @@ export default function ChatPage() {
         onSend={sendMessage}
         isThinking={isThinking}
         onProceedToCheckout={() => sendMessage("I am ready to checkout.")}
-        language={language}
-        cart={cart}
         voiceOrb={
           <VoiceOrb
             visible={isSpeaking}

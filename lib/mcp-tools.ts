@@ -37,12 +37,13 @@ export async function callMcpTool(
         .join("");
 
       try {
-        return JSON.parse(textContent);
+        const parsed = JSON.parse(textContent);
+        return sanitizeMcpResult(parsed);
       } catch {
-        return textContent;
+        return sanitizeMcpResult(textContent);
       }
     }
-    return result;
+    return sanitizeMcpResult(result);
   } catch (error: any) {
     const msg = String(error);
 
@@ -62,4 +63,47 @@ export async function callMcpTool(
     console.error(`MCP tool error [${toolName}]:`, error);
     throw new Error(`Tool ${toolName} failed: ${msg}`);
   }
+}
+
+function cleanGarbledText(text: string): string {
+  if (typeof text !== "string") return text;
+  
+  // 1. Replaces pseudo-entities representing garbled UTF-8 characters (like en-dash, smart quotes, etc.)
+  let cleaned = text.replace(/(?:[Nn&]#(?:226|8364|8211|8212|8217|8220|8221|147|148|150|151|153);?\s*)+/g, " - ");
+  
+  // 2. Decode standard HTML entities
+  cleaned = cleaned
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#039;/g, "'")
+    .replace(/&#40;/g, "(")
+    .replace(/&#41;/g, ")");
+    
+  // 3. Clean up double spaces or extra dashes
+  cleaned = cleaned.replace(/\s*-\s*-\s*/g, " - ");
+  cleaned = cleaned.replace(/\s+/g, " ");
+  return cleaned.trim();
+}
+
+function sanitizeMcpResult(val: any): any {
+  if (val === null || val === undefined) {
+    return val;
+  }
+  if (typeof val === "string") {
+    return cleanGarbledText(val);
+  }
+  if (Array.isArray(val)) {
+    return val.map(sanitizeMcpResult);
+  }
+  if (typeof val === "object") {
+    const res: Record<string, any> = {};
+    for (const key of Object.keys(val)) {
+      res[key] = sanitizeMcpResult(val[key]);
+    }
+    return res;
+  }
+  return val;
 }
