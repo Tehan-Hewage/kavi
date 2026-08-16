@@ -7,14 +7,26 @@ import { LanguagePill } from "../ui/LanguagePill";
 import { CurrencyPill } from "../ui/CurrencyPill";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { IconButton } from "../ui/buttons/IconButton";
+import { FloatingOrderTracker } from "../customer/FloatingOrderTracker";
 import { useMutePreference } from "@/hooks/useMutePreference";
 
 interface HeaderProps {
   cartCount: number;
   onOpenCart: () => void;
+  activeOrderRef?: string;
+  activeOrderStatus?: string;
+  activeOrderLocation?: string;
+  onTrackActiveOrder?: () => void;
 }
 
-export default function Header({ cartCount, onOpenCart }: HeaderProps) {
+export default function Header({
+  cartCount,
+  onOpenCart,
+  activeOrderRef,
+  activeOrderStatus = "In Process",
+  activeOrderLocation,
+  onTrackActiveOrder,
+}: HeaderProps) {
   const { muted, toggleMute } = useMutePreference();
 
   return (
@@ -55,6 +67,18 @@ export default function Header({ cartCount, onOpenCart }: HeaderProps) {
           </div>
         </div>
       </div>
+
+      {/* CENTER / RIGHT — Live in-flight Order Tracker Pill */}
+      {activeOrderRef && (
+        <div className="hidden md:flex items-center">
+          <FloatingOrderTracker
+            orderRef={activeOrderRef}
+            status={activeOrderStatus}
+            location={activeOrderLocation}
+            onClick={() => onTrackActiveOrder?.()}
+          />
+        </div>
+      )}
 
       {/* RIGHT — Controls */}
       <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">

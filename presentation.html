@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kavi AI Shopping Assistant — Finalist Presentation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #120624;
+      color: #ffffff;
+      overflow: hidden;
+    }
+    .slide {
+      display: none;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .glow-yellow {
+      box-shadow: 0 0 40px rgba(255, 199, 0, 0.35);
+    }
+    .glow-purple {
+      box-shadow: 0 8px 32px rgba(76, 29, 110, 0.4);
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between p-6 sm:p-10 select-none relative">
+
+  <!-- Ambient Glow -->
+  <div class="absolute -top-40 -left-40 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+  <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+  <!-- TOP BAR -->
+  <header class="flex items-center justify-between z-10 border-b border-white/10 pb-4">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-2xl bg-purple-700 flex items-center justify-center font-black text-yellow-300 text-base shadow-md">
+        K
+      </div>
+      <div>
+        <span class="font-bold text-sm text-white tracking-wide">Kavi (කවි)</span>
+        <span class="text-xs text-purple-300 ml-2">Kapruka AI Shopping Assistant</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 text-xs text-purple-300 font-mono">
+      <span id="slideCounter">Slide 1 / 8</span>
+    </div>
+  </header>
+
+  <!-- MAIN SLIDES CONTAINER -->
+  <main class="flex-1 flex items-center justify-center py-6 z-10 max-w-5xl mx-auto w-full">
+
+    <!-- SLIDE 1: Title -->
+    <div class="slide active flex-col items-center text-center space-y-6 w-full" data-slide="1">
+      <span class="px-3.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-yellow-300 text-xs font-extrabold uppercase tracking-wider">
+        Agent Challenge 2026 — Finalist Showcase
+      </span>
+      <div class="w-24 h-24 rounded-3xl bg-gradient-to-br from-yellow-400 via-purple-600 to-purple-900 p-1 glow-yellow flex items-center justify-center">
+        <div class="w-full h-full bg-[#1E0B33] rounded-[22px] flex items-center justify-center">
+          <span class="text-4xl font-black text-yellow-300">K</span>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight">Kavi (කවි) — AI Shopping Assistant</h1>
+        <p class="text-purple-200 text-base sm:text-lg max-w-2xl mx-auto">
+          From product discovery to 1-tap paid checkout in <strong class="text-yellow-400 font-extrabold">under 90 seconds</strong>.
+        </p>
+      </div>
+      <div class="grid grid-cols-3 gap-4 w-full pt-4">
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+          <div class="text-yellow-400 font-black text-xl">Phase 2</div>
+          <div class="text-xs text-purple-200 mt-1">Deep Customer Memory</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+          <div class="text-yellow-400 font-black text-xl">Trilingual</div>
+          <div class="text-xs text-purple-200 mt-1">Sinhala · English · Tanglish</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+          <div class="text-yellow-400 font-black text-xl">100% Grounded</div>
+          <div class="text-xs text-purple-200 mt-1">Live Kapruka MCP Tools</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Problem vs Solution -->
+    <div class="slide flex-col space-y-4 w-full" data-slide="2">
+      <span class="px-3.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-yellow-300 text-xs font-extrabold uppercase tracking-wider w-max">
+        Market Opportunity
+      </span>
+      <h2 class="text-3xl font-extrabold text-white">The Problem with Traditional E-Commerce</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div class="p-6 rounded-3xl bg-rose-950/20 border border-rose-500/30 space-y-3">
+          <div class="text-rose-400 font-bold text-base">⚠️ Traditional Flow</div>
+          <ul class="space-y-2.5 text-xs sm:text-sm text-purple-200/90 leading-relaxed">
+            <li><strong>✕ High Friction:</strong> 6+ minutes spent manually typing recipient names, phone numbers, and addresses.</li>
+            <li><strong>✕ Impersonal Bots:</strong> Generic bots regurgitate canned FAQs with zero memory or customer recognition.</li>
+            <li><strong>✕ Diaspora Barrier:</strong> Overseas Sri Lankans struggle with currency conversion and delivery cutoff uncertainty.</li>
+          </ul>
+        </div>
+        <div class="p-6 rounded-3xl bg-emerald-950/20 border border-emerald-500/30 space-y-3">
+          <div class="text-emerald-400 font-bold text-base">✨ The Kavi Transformation</div>
+          <ul class="space-y-2.5 text-xs sm:text-sm text-purple-200/90 leading-relaxed">
+            <li><strong>✓ 1-Tap Checkout:</strong> Pulls saved addresses in 1 click, eliminating redundant data entry.</li>
+            <li><strong>✓ Deep Memory:</strong> Greets customers by name, tracks past orders, and offers repeat purchase reorders.</li>
+            <li><strong>✓ Diaspora Multi-Currency:</strong> Real-time FX conversion across USD, GBP, AUD, EUR, CAD, and LKR.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: Phase 2 Personalization -->
+    <div class="slide flex-col space-y-4 w-full" data-slide="3">
+      <span class="px-3.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-yellow-300 text-xs font-extrabold uppercase tracking-wider w-max">
+        Phase 2 Customer Tools
+      </span>
+      <h2 class="text-3xl font-extrabold text-white">Deep Customer Recognition & Memory</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+        <div class="p-5 rounded-3xl bg-white/5 border border-purple-400/20 flex flex-col justify-between space-y-3">
+          <div class="space-y-2">
+            <div class="text-2xl">👤</div>
+            <h3 class="text-base font-bold text-white">Customer Profile</h3>
+            <p class="text-xs text-purple-200 leading-relaxed">Calls <code>kapruka_customer_details</code> to mount the personalized Welcome Banner.</p>
+          </div>
+          <div class="p-2.5 rounded-xl bg-purple-950/60 text-[11px] font-mono text-yellow-300 border border-purple-800/40">"Hari, onna! Sandaru 👋"</div>
+        </div>
+        <div class="p-5 rounded-3xl bg-white/5 border border-purple-400/20 flex flex-col justify-between space-y-3">
+          <div class="space-y-2">
+            <div class="text-2xl">📍</div>
+            <h3 class="text-base font-bold text-white">1-Tap Address Book</h3>
+            <p class="text-xs text-purple-200 leading-relaxed">Calls <code>kapruka_customer_addresses</code> for instant address selection.</p>
+          </div>
+          <div class="p-2.5 rounded-xl bg-purple-950/60 text-[11px] font-mono text-yellow-300 border border-purple-800/40">[ 🏠 Church Road, Hatton ]</div>
+        </div>
+        <div class="p-5 rounded-3xl bg-white/5 border border-purple-400/20 flex flex-col justify-between space-y-3">
+          <div class="space-y-2">
+            <div class="text-2xl">🔁</div>
+            <h3 class="text-base font-bold text-white">Smart Reorders</h3>
+            <p class="text-xs text-purple-200 leading-relaxed">Calls <code>kapruka_order_history</code> to suggest repeat consumables (cakes, coffee).</p>
+          </div>
+          <div class="p-2.5 rounded-xl bg-purple-950/60 text-[11px] font-mono text-yellow-300 border border-purple-800/40">[ 🔁 Order Again ]</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: In-Chat Visual UI -->
+    <div class="slide flex-col space-y-4 w-full" data-slide="4">
+      <span class="px-3.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-yellow-300 text-xs font-extrabold uppercase tracking-wider w-max">
+        Design Aesthetics
+      </span>
+      <h2 class="text-3xl font-extrabold text-white">Rich In-Chat Conversational Commerce</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+          <div class="text-xl text-yellow-400 font-bold">⚖️</div>
+          <h4 class="font-bold text-sm text-white">Product Compare</h4>
+          <p class="text-xs text-purple-200/80">Side-by-side spec sheet comparing prices, weight, ratings, and cutoffs.</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+          <div class="text-xl text-yellow-400 font-bold">🛒</div>
+          <h4 class="font-bold text-sm text-white">Sticky Floating Cart</h4>
+          <p class="text-xs text-purple-200/80">Pinned bottom pill showing live totals and instant 1-tap checkout.</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+          <div class="text-xl text-yellow-400 font-bold">📦</div>
+          <h4 class="font-bold text-sm text-white">Live Timeline</h4>
+          <p class="text-xs text-purple-200/80">Radar ring milestone tracker showing in-flight order progress.</p>
+        </div>
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+          <div class="text-xl text-yellow-400 font-bold">✨</div>
+          <h4 class="font-bold text-sm text-white">Confetti Delight</h4>
+          <p class="text-xs text-purple-200/80">Canvas particle burst in Kapruka colors on pay link creation.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: Localization & Voice -->
+    <div class="slide flex-col space-y-4 w-full" data-slide="5">
+      <span class="px-3.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-yellow-300 text-xs font-extrabold uppercase tracking-wider w-max">
+        Cultural Authenticity
+      </span>
+      <h2 class="text-3xl font-extrabold text-white">Trilingual Fluency & Sensory Audio</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div class="p-5 rounded-3xl bg-white/5 border border-purple-400/20 space-y-3">
+          <div class="text-yellow-400 font-bold text-sm">🌐 Trilingual Conversational Mode</div>
+          <div class="space-y-2 text-xs text-purple-200">
+            <div class="p-2.5 rounded-xl bg-purple-950/40 border border-purple-800/40">
+              <strong class="text-white">සිංහල (Sinhala Unicode):</strong>
+              <p class="italic text-yellow-300 mt-0.5">"ඔබට අවශ්‍ය උපන්දින කේක් වර්ග මෙන්න! Hatton වලට හෙට delivery කරන්න පුළුවන්."</p>
+            </div>
+            <div class="p-2.5 rounded-xl bg-purple-950/40 border border-purple-800/40">
+              <strong class="text-white">Tanglish / Singlish:</strong>
+              <p class="italic text-yellow-300 mt-0.5">"Aiyo, don't worry machan! Delivery to Colombo 03 is guaranteed for tomorrow."</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-3xl bg-white/5 border border-purple-400/20 space-y-3">
+          <div class="text-yellow-400 font-bold text-sm">🎙️ Voice Equalizer & Controls</div>
+          <ul class="space-y-2 text-xs text-purple-200 leading-relaxed">
+            <li>• <strong>Dynamic Waveform:</strong> Multi-bar equalizer dances inside input during speech.</li>
+            <li>• <strong>Speed Toggle:</strong> 1-tap toggle between <code>1x</code>, <code>1.25x</code>, and <code>1.5x</code> voice speeds.</li>
+            <li>• <strong>Header Voice Mute:</strong> Quick audio toggle for silent browsing environments.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: Architecture -->
+    <div class="slide flex-col space-y-4 w-full" data-slide="6">
+      <span class="px-3.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-yellow-300 text-xs font-extrabold uppercase tracking-wider w-max">
+        System Architecture
+      </span>
+      <h2 class="text-3xl font-extrabold text-white">Robust Engineering & Security</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div class="p-5 rounded-3xl bg-white/5 border border-white/10 space-y-2">
+          <div class="text-yellow-400 font-bold text-sm">⚡ LLM & Streaming Core</div>
+          <p class="text-xs text-purple-200/90 leading-relaxed">
+            Powered by <strong>Gemini 3.1 Flash Lite</strong> with seamless <strong>Claude Sonnet</strong> fallback. Server-Sent Events (SSE) provide sub-2-second token streaming.
+          </p>
+          <div class="text-[11px] font-mono text-purple-300 pt-2">Next.js 14 · TypeScript · MCP SDK</div>
+        </div>
+        <div class="p-5 rounded-3xl bg-white/5 border border-white/10 space-y-2">
+          <div class="text-emerald-400 font-bold text-sm">🔒 Security & Fallbacks</div>
+          <ul class="space-y-1.5 text-xs text-purple-200/90 leading-relaxed">
+            <li>• <strong>Email Guard:</strong> <code>assertEmailFromConversation</code> stops account guessing.</li>
+            <li>• <strong>ASCII Sanitization:</strong> Formats order text to prevent DB corruption.</li>
+            <li>• <strong>Hub Fallback:</strong> Recommends nearest hubs (Colombo, Kandy, Galle) for remote towns.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: Business Impact -->
+    <div class="slide flex-col space-y-4 w-full" data-slide="7">
+      <span class="px-3.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-yellow-300 text-xs font-extrabold uppercase tracking-wider w-max">
+        Measurable Impact
+      </span>
+      <h2 class="text-3xl font-extrabold text-white">Business Metrics & Reliability</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 pt-3">
+        <div class="p-6 rounded-3xl bg-white/5 border border-yellow-400/30 text-center space-y-2">
+          <div class="text-3xl font-black text-white">&lt; 90 sec</div>
+          <div class="text-xs text-purple-200">End-to-End Checkout Time (70% reduction)</div>
+        </div>
+        <div class="p-6 rounded-3xl bg-white/5 border border-yellow-400/30 text-center space-y-2">
+          <div class="text-3xl font-black text-white">+35%</div>
+          <div class="text-xs text-purple-200">Repeat Purchase Conversion via Reorder Nudges</div>
+        </div>
+        <div class="p-6 rounded-3xl bg-white/5 border border-yellow-400/30 text-center space-y-2">
+          <div class="text-3xl font-black text-white">107 Tests</div>
+          <div class="text-xs text-purple-200">100% Automated Unit & Integration Coverage</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: Live Demo & Q&A -->
+    <div class="slide flex-col items-center text-center space-y-6 w-full" data-slide="8">
+      <span class="px-3.5 py-1 rounded-full bg-purple-500/20 border border-purple-400/30 text-yellow-300 text-xs font-extrabold uppercase tracking-wider">
+        Live Demonstration
+      </span>
+      <h2 class="text-3xl sm:text-5xl font-black text-white">Experience Kavi Live in Action</h2>
+      <div class="p-6 rounded-3xl bg-purple-900/40 border border-yellow-400/40 max-w-xl mx-auto space-y-4">
+        <p class="text-xs text-purple-200 leading-relaxed">
+          Switching to screen share demo for customer lookup (<code>sandaru.perera@gmail.com</code>), product compare, and 1-tap checkout.
+        </p>
+        <a href="http://localhost:3000" target="_blank" class="inline-block px-6 py-3 rounded-2xl bg-yellow-400 hover:bg-yellow-300 text-purple-950 font-black text-sm shadow-lg transition-transform transform hover:scale-105">
+          Launch Kavi Web App ↗
+        </a>
+      </div>
+      <p class="text-xs text-purple-300 font-semibold">Thank you! Open for Judges' Questions.</p>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM CONTROLS & TIMELINE -->
+  <footer class="flex items-center justify-between z-10 border-t border-white/10 pt-4">
+    <div class="flex items-center gap-2" id="dotsContainer"></div>
+
+    <div class="flex items-center gap-2">
+      <button id="prevBtn" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+      </button>
+
+      <button id="nextBtn" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-purple-950 font-bold text-xs shadow-md transition-all cursor-pointer">
+        <span>Next</span>
+        <svg class="w-4 h-4 text-purple-950" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const dotsContainer = document.getElementById('dotsContainer');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const counter = document.getElementById('slideCounter');
+    let currentIdx = 0;
+
+    // Create dots
+    slides.forEach((_, idx) => {
+      const dot = document.createElement('button');
+      dot.className = `h-2 rounded-full transition-all duration-300 cursor-pointer ${idx === 0 ? 'w-8 bg-yellow-400' : 'w-2 bg-white/20'}`;
+      dot.onclick = () => goToSlide(idx);
+      dotsContainer.appendChild(dot);
+    });
+
+    function updateView() {
+      slides.forEach((slide, idx) => {
+        slide.classList.toggle('active', idx === currentIdx);
+      });
+      Array.from(dotsContainer.children).forEach((dot, idx) => {
+        dot.className = `h-2 rounded-full transition-all duration-300 cursor-pointer ${idx === currentIdx ? 'w-8 bg-yellow-400' : 'w-2 bg-white/20'}`;
+      });
+      counter.textContent = `Slide ${currentIdx + 1} / ${slides.length}`;
+      prevBtn.disabled = currentIdx === 0;
+      nextBtn.disabled = currentIdx === slides.length - 1;
+    }
+
+    function goToSlide(idx) {
+      currentIdx = idx;
+      updateView();
+    }
+
+    prevBtn.onclick = () => { if (currentIdx > 0) goToSlide(currentIdx - 1); };
+    nextBtn.onclick = () => { if (currentIdx < slides.length - 1) goToSlide(currentIdx + 1); };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        if (currentIdx < slides.length - 1) goToSlide(currentIdx + 1);
+      } else if (e.key === 'ArrowLeft') {
+        if (currentIdx > 0) goToSlide(currentIdx - 1);
+      }
+    });
+
+    updateView();
+  </script>
+</body>
+</html>

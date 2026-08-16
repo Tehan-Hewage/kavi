@@ -201,3 +201,13 @@ html, body, #__next {
   border: 2px solid var(--k-yellow);
   animation: pulse-ring 1.5s ease-out infinite;
 }
+
+/* ─── Hide scrollbars utility ───────────────────────────── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

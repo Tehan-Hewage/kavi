@@ -26,4 +26,10 @@ describe("cleanMessageText", () => {
     const raw = "Line 1\n\n\n\nLine 2";
     expect(cleanMessageText(raw)).toBe("Line 1\n\nLine 2");
   });
+
+  it("smooths awkward payment link phrasing", () => {
+    const raw = "Here is your payment [Complete your order here](https://kapruka.com/pay)";
+    expect(cleanMessageText(raw)).toBe("Here is your payment link: [Complete your order here](https://kapruka.com/pay)");
+  });
 });
+

@@ -233,20 +233,50 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </div>
       )}
 
-      <textarea
-        ref={textareaRef}
-        rows={1}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        disabled={disabled || isListening}
-        placeholder={isTranscribing ? "Transcribing…" : isListening ? "Listening… speak now 🎙" : t.placeholder}
-        className="flex-1 max-h-40 bg-transparent resize-none border-0 text-sm font-semibold focus:outline-none focus:ring-0 py-1 px-2 no-scrollbar"
-        style={{
-          color: isListening ? "var(--text-secondary)" : "var(--text-primary)",
-          transition: "color 0.2s",
-        }}
-      />
+      {isListening ? (
+        <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2">
+          <span className="text-xs font-bold text-red-500 mr-2 animate-pulse flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+            Listening…
+          </span>
+          {[14, 26, 34, 20, 30, 18, 28, 16, 32, 22].map((h, i) => (
+            <motion.span
+              key={i}
+              className="w-1 rounded-full"
+              style={{
+                background: i % 2 === 0 ? "#FFC700" : "#6B2D96",
+                boxShadow: "0 0 6px rgba(255,199,0,0.5)",
+              }}
+              animate={{
+                height: [6, h, 10, h * 0.85, 6],
+                opacity: [0.6, 1, 0.7, 1, 0.6],
+              }}
+              transition={{
+                duration: 0.85,
+                repeat: Infinity,
+                delay: i * 0.08,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </div>
+      ) : (
+        <textarea
+          ref={textareaRef}
+          rows={1}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={disabled || isListening}
+          placeholder={isTranscribing ? "Transcribing…" : t.placeholder}
+          className="flex-1 max-h-40 bg-transparent resize-none border-0 text-sm font-semibold focus:outline-none focus:ring-0 py-1 px-2 no-scrollbar"
+          style={{
+            color: isListening ? "var(--text-secondary)" : "var(--text-primary)",
+            transition: "color 0.2s",
+          }}
+        />
+      )}
+
       <motion.button
         whileHover={canSend ? {
           scale:     1.08,

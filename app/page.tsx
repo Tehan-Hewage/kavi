@@ -12,18 +12,21 @@ import { useTTS } from "@/hooks/useTTS";
 import { useMutePreference } from "@/hooks/useMutePreference";
 import { VoiceOrb } from "@/components/ui/VoiceOrb";
 
+
 const formatFriendlyError = (errorMsg: string): string => {
-  const isCreditError = errorMsg.includes("credit balance") || errorMsg.includes("billing") || errorMsg.includes("400");
-  const isRateLimit = errorMsg.includes("429") || errorMsg.includes("rate_limit") || errorMsg.includes("too many requests");
+  const lower = errorMsg.toLowerCase();
+  const isCreditError = lower.includes("credit balance") || lower.includes("insufficient_quota") || lower.includes("billing");
+  const isRateLimit = lower.includes("429") || lower.includes("rate_limit") || lower.includes("too many requests") || lower.includes("resource_exhausted");
 
   if (isCreditError) {
-    return "Aiyyo! It looks like my Anthropic API credit balance is empty. 😔 Please top up your billing credits on Anthropic to continue shopping with Kavi!";
+    return "Aiyyo! It looks like my AI credit balance is empty. 😔 Please check your API credits to continue shopping with Kavi!";
   }
   if (isRateLimit) {
     return "Adoh, it's a bit busy right now! 🚀 Too many requests are coming in. Please wait a minute and try again, machan!";
   }
   return `Sorry, I ran into a bit of trouble: ${errorMsg}. Please try again in a moment!`;
 };
+
 
 export default function ChatPage() {
   const { language } = useLanguage();
@@ -323,36 +326,27 @@ export default function ChatPage() {
                 break;
               }
             } catch (err) {
-              console.error("SSE parse error", err, "raw line:", jsonStr);
-              const checkMsg = jsonStr.toLowerCase();
-              if (checkMsg.includes("credit balance") || checkMsg.includes("billing") || checkMsg.includes("400") || checkMsg.includes("429") || checkMsg.includes("limit") || checkMsg.includes("error")) {
-                setIsThinking(false);
-                setMessages((prev) => {
-                  if (prev.length === 0) return prev;
-                  const lastMsg = prev[prev.length - 1];
-                  if (lastMsg && lastMsg.role === "assistant") {
-                    const updated = [...prev];
-                    updated[updated.length - 1] = {
-                      ...lastMsg,
-                      content: formatFriendlyError(jsonStr),
-                      isToolThinking: false
-                    };
-                    return updated;
-                  }
-                  return prev;
-                });
-                break;
-              }
+              console.warn("SSE chunk parse notice:", err);
             }
           }
         }
       }
     } catch (err: any) {
-      console.error(err);
+      console.error("Chat stream error:", err);
       setMessages((prev) => {
         if (prev.length === 0) return prev;
         const lastMsg = prev[prev.length - 1];
         if (lastMsg && lastMsg.role === "assistant") {
+          // If tool results already exist and rendered (e.g. order history cards), keep them clean
+          if (lastMsg.toolResults && lastMsg.toolResults.length > 0) {
+            const updated = [...prev];
+            updated[updated.length - 1] = {
+              ...lastMsg,
+              isToolThinking: false
+            };
+            return updated;
+          }
+
           const friendlyMessage = formatFriendlyError(err.message || String(err));
           const updatedContent = lastMsg.content === ""
             ? friendlyMessage
@@ -369,6 +363,7 @@ export default function ChatPage() {
         return prev;
       });
     } finally {
+
       setIsThinking(false);
       setIsStreaming(false);
     }
@@ -382,7 +377,30 @@ export default function ChatPage() {
     sendMessage(`Show products in category ${name}`);
   };
 
+  // Find in-flight order from order history tool results
+  const inFlightOrder = React.useMemo(() => {
+    for (const msg of messages) {
+      if (msg.toolResults) {
+        for (const tr of msg.toolResults) {
+          if (tr.tool === "kapruka_order_history") {
+            const list = tr.result?.orders || tr.result?.order_history || (Array.isArray(tr.result) ? tr.result : []);
+            for (const o of list) {
+              const status = String(o.status || "").toLowerCase();
+              if (status.includes("process") || status.includes("delivery") || status.includes("pending")) {
+                const ref = o.order_reference || o.order_ref || o.order_id || o.reference || o.order_no || "";
+                const loc = typeof o.recipient === "object" ? o.recipient?.city || o.recipient?.address : "";
+                return { ref, status: o.status || "In Process", loc };
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }, [messages]);
+
   const handleSubmitCheckout = (details: {
+
     name: string;
     phone: string;
     address: string;
@@ -408,9 +426,15 @@ export default function ChatPage() {
     <>
       <ChatShell
         activeChipContext={getChipContext()}
+
+
         onSend={sendMessage}
         isThinking={isThinking}
         onProceedToCheckout={() => sendMessage("I am ready to checkout.")}
+        activeOrderRef={inFlightOrder?.ref}
+        activeOrderStatus={inFlightOrder?.status}
+        activeOrderLocation={inFlightOrder?.loc}
+        onTrackActiveOrder={() => inFlightOrder?.ref && sendMessage(`Track order #${inFlightOrder.ref}`)}
         voiceOrb={
           <VoiceOrb
             visible={isSpeaking}
@@ -425,10 +449,12 @@ export default function ChatPage() {
           onOpenDetails={handleOpenDetails}
           onSelectCategory={handleSelectCategory}
           onSubmitCheckout={handleSubmitCheckout}
+          onSubmitQuickMessage={sendMessage}
           activeSpeakingId={activeSpeakingId}
           onSpeak={handleSpeak}
           ttsError={ttsError}
         />
+
       </ChatShell>
 
       {/* Slide-Up Detail Modal */}
@@ -439,3 +465,4 @@ export default function ChatPage() {
     </>
   );
 }
+

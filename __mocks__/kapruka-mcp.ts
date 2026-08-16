@@ -67,6 +67,43 @@ const handlers = [
           resultPayload = { available: true, cities: ["Colombo", "Kandy", "Galle"] };
           break;
 
+        case "kapruka_customer_details":
+          resultPayload = {
+            name:     "Sandaru Perera",
+            email:    "sandaru.perera@gmail.com",
+            phone:    "+94771234567",
+            language: "en",
+          };
+          break;
+
+        case "kapruka_order_history":
+          resultPayload = {
+            email: "sandaru.perera@gmail.com",
+            orders: [
+              {
+                order_reference: "KP-20260601-0234",
+                status:          "delivered",
+                order_date:      "2026-06-01T10:00:00Z",
+                delivery_date:   "2026-06-02T14:00:00Z",
+                amount:          12600,
+                recipient:       "Amma",
+                items_summary:   "Birthday Cake, Red Roses Bouquet",
+              },
+            ],
+          };
+          break;
+
+        case "kapruka_customer_addresses":
+          resultPayload = {
+            email: "sandaru.perera@gmail.com",
+            addresses: [
+              { label: "Home",   recipient_name: "Sandaru Perera", address: "No 45, Galle Road",       city: "Colombo", phone: "+94771234567" },
+              { label: "Office", recipient_name: "Sandaru Perera", address: "12 Duplication Road, Col 3", city: "Colombo", phone: "+94771234567" },
+            ],
+          };
+          break;
+
+
         default:
           return HttpResponse.json({
             jsonrpc: "2.0",

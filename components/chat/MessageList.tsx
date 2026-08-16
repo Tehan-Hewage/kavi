@@ -12,6 +12,7 @@ interface MessageListProps {
   onOpenDetails?: (productId: string) => void;
   onSelectCategory?: (slug: string, name: string) => void;
   onSubmitCheckout?: (details: any) => void;
+  onSubmitQuickMessage?: (text: string) => void;
   activeSpeakingId?: string | null;
   onSpeak?: (text: string, messageId: string) => void;
   ttsError?: string | null;
@@ -24,10 +25,12 @@ export const MessageList: React.FC<MessageListProps> = ({
   onOpenDetails,
   onSelectCategory,
   onSubmitCheckout,
+  onSubmitQuickMessage,
   activeSpeakingId = null,
   onSpeak,
   ttsError = null,
 }) => {
+
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,10 +79,12 @@ export const MessageList: React.FC<MessageListProps> = ({
             onOpenDetails={onOpenDetails}
             onSelectCategory={onSelectCategory}
             onSubmitCheckout={onSubmitCheckout}
+            onSubmitQuickMessage={onSubmitQuickMessage}
             activeSpeakingId={activeSpeakingId}
             onSpeak={onSpeak}
             ttsError={ttsError}
           />
+
         );
       })}
       

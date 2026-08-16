@@ -1,6 +1,11 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { callMcpTool } from "@/lib/mcp-tools";
+import {
+  callMcpTool,
+  getCustomerDetails,
+  getOrderHistory,
+  getCustomerAddresses,
+} from "@/lib/mcp-tools";
 import { buildSystemPrompt } from "@/lib/agent-system-prompt";
 import { MessageParam } from "@anthropic-ai/sdk/resources/messages";
 
@@ -122,6 +127,8 @@ const KAPRUKA_TOOLS: Anthropic.Tool[] = [
           },
           required: ["name"]
         },
+
+
         gift_message: { type: "string", description: "Optional gift card message (max 300 chars)" },
         currency:     { type: "string", description: "Currency code, default LKR" }
       },
@@ -148,6 +155,53 @@ const KAPRUKA_TOOLS: Anthropic.Tool[] = [
     }
   }
 ];
+
+const PHASE2_TOOLS: Anthropic.Tool[] = [
+  {
+    name: "kapruka_customer_details",
+    description: `Get a returning customer's profile (name, phone, language, billing info).
+      Call this as soon as the customer provides their email, so you can greet them by name
+      and personalize the conversation. Only call with an email the customer themselves typed.`,
+    input_schema: {
+      type: "object",
+      properties: {
+        email: { type: "string", description: "Customer's account email — must come from the user's own message" }
+      },
+      required: ["email"]
+    }
+  },
+  {
+    name: "kapruka_order_history",
+    description: `Get a customer's recent orders — reference, status, dates, amount, recipient,
+      and items. Use this for "where's my order", "what did I buy last time", or to suggest
+      a repeat purchase. For live tracking detail on ONE order, follow up with kapruka_track_order
+      using the order_reference from this result.`,
+    input_schema: {
+      type: "object",
+      properties: {
+        email: { type: "string", description: "Customer's account email" },
+        limit: { type: "number", description: "How many recent orders to fetch (1-20, default 5)" }
+      },
+      required: ["email"]
+    }
+  },
+  {
+    name: "kapruka_customer_addresses",
+    description: `Get a customer's saved delivery addresses (address book + recently used).
+      Use this so the customer can say "send it to my home" or "same as last time" instead
+      of retyping their address. Pass the chosen address into kapruka_create_order's
+      recipient field.`,
+    input_schema: {
+      type: "object",
+      properties: {
+        email: { type: "string", description: "Customer's account email" }
+      },
+      required: ["email"]
+    }
+  },
+];
+
+const ALL_TOOLS = [...KAPRUKA_TOOLS, ...PHASE2_TOOLS];
 
 // Tool definitions passed to Gemini (requires uppercase type definitions)
 const GEMINI_TOOLS = [
@@ -292,9 +346,119 @@ const GEMINI_TOOLS = [
   }
 ];
 
+const PHASE2_GEMINI_TOOLS = [
+  {
+    name: "kapruka_customer_details",
+    description: "Get a returning customer's profile (name, phone, language, billing info). Only call with an email the customer typed.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        email: { type: "STRING", description: "Customer's account email — must come from user message" }
+      },
+      required: ["email"]
+    }
+  },
+  {
+    name: "kapruka_order_history",
+    description: "Get a customer's recent orders — reference, status, dates, amount, recipient, and items.",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        email: { type: "STRING", description: "Customer's account email" },
+        limit: { type: "NUMBER", description: "How many recent orders to fetch (1-20, default 5)" }
+      },
+      required: ["email"]
+    }
+  },
+  {
+    name: "kapruka_customer_addresses",
+    description: "Get a customer's saved delivery addresses (address book + recently used).",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        email: { type: "STRING", description: "Customer's account email" }
+      },
+      required: ["email"]
+    }
+  }
+];
+
+const ALL_GEMINI_TOOLS = [...GEMINI_TOOLS, ...PHASE2_GEMINI_TOOLS];
+
+function extractEmailsFromUserMessages(messages: any[]): Set<string> {
+  const emailRegex = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
+  const emails = new Set<string>();
+  for (const msg of messages) {
+    const isUser = msg.role === "user";
+    if (!isUser) continue;
+    let text = "";
+    if (typeof msg.content === "string") {
+      text = msg.content;
+    } else if (Array.isArray(msg.content)) {
+      text = msg.content
+        .filter((c: any) => c.type === "text" || typeof c === "string")
+        .map((c: any) => (typeof c === "string" ? c : c.text))
+        .join(" ");
+    } else if (Array.isArray(msg.parts)) {
+      text = msg.parts.map((p: any) => p.text || "").join(" ");
+    }
+    const matches = text.match(emailRegex) ?? [];
+    matches.forEach(e => emails.add(e.toLowerCase()));
+  }
+  return emails;
+}
+
+async function executeToolCall(
+  toolName: string,
+  input: Record<string, unknown>,
+  conversationEmails: Set<string>
+) {
+  try {
+    switch (toolName) {
+      case "kapruka_customer_details":
+        return await getCustomerDetails(input.email as string, conversationEmails);
+
+      case "kapruka_order_history":
+        return await getOrderHistory(input.email as string, conversationEmails, input.limit as number);
+
+      case "kapruka_customer_addresses":
+        return await getCustomerAddresses(input.email as string, conversationEmails);
+
+      case "kapruka_create_order": {
+        const orderInput = JSON.parse(JSON.stringify(input || {}));
+        // Kapruka MCP server validates sender strictly with Pydantic (extra="forbid")
+        // Only { name, anonymous } are permitted.
+        if (orderInput.sender && typeof orderInput.sender === "object") {
+          const senderObj: { name: string; anonymous?: boolean } = {
+            name: String(orderInput.sender.name || "Customer"),
+          };
+          if (typeof orderInput.sender.anonymous === "boolean") {
+            senderObj.anonymous = orderInput.sender.anonymous;
+          }
+          orderInput.sender = senderObj;
+        }
+        return await callMcpTool(toolName, orderInput);
+      }
+
+      default:
+        return await callMcpTool(toolName, input);
+
+
+    }
+  } catch (err: any) {
+    console.error(`Tool execution error [${toolName}]:`, err);
+    return {
+      error: true,
+      message: err?.message || String(err)
+    };
+  }
+}
+
+
 export async function POST(req: NextRequest) {
   const { messages, language, cart, currency } = await req.json();
   
+  const conversationEmails = extractEmailsFromUserMessages(messages);
   const systemPrompt = buildSystemPrompt(language, cart || [], currency || "LKR");
 
   // Agentic loop with tool use
@@ -319,7 +483,7 @@ export async function POST(req: NextRequest) {
             systemInstruction: {
               parts: [{ text: systemPrompt }]
             },
-            tools: [{ functionDeclarations: GEMINI_TOOLS }],
+            tools: [{ functionDeclarations: ALL_GEMINI_TOOLS }],
             generationConfig: {
               maxOutputTokens: 4096,
               temperature: 0.7
@@ -359,7 +523,7 @@ export async function POST(req: NextRequest) {
             const responseParts = await Promise.all(
               functionCalls.map(async (callPart: any) => {
                 const fc = callPart.functionCall;
-                const result = await callMcpTool(fc.name, fc.args);
+                const result = await executeToolCall(fc.name, fc.args, conversationEmails);
 
                 await writer.write(encoder.encode(
                   `data: ${JSON.stringify({ type: "tool_result", tool: fc.name, result, input: fc.args })}\n\n`
@@ -406,7 +570,7 @@ export async function POST(req: NextRequest) {
             model: "claude-sonnet-4-20250514",
             max_tokens: 4096,
             system: systemPrompt,
-            tools: KAPRUKA_TOOLS,
+            tools: ALL_TOOLS,
             messages: currentMessages,
             stream: false
           });
@@ -422,7 +586,11 @@ export async function POST(req: NextRequest) {
             const toolResults = await Promise.all(
               toolUseBlocks.map(async (toolBlock) => {
                 if (toolBlock.type !== "tool_use") return null;
-                const result = await callMcpTool(toolBlock.name, toolBlock.input as Record<string, unknown>);
+                const result = await executeToolCall(
+                  toolBlock.name,
+                  toolBlock.input as Record<string, unknown>,
+                  conversationEmails
+                );
 
                 await writer.write(encoder.encode(
                   `data: ${JSON.stringify({ type: "tool_result", tool: toolBlock.name, result, input: toolBlock.input })}\n\n`

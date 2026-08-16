@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Clock, CheckCircle } from "lucide-react";
 import { YellowButton } from "@/components/ui/buttons/YellowButton";
 import { CurrencyContext } from "@/components/providers/CurrencyProvider";
+import { Confetti } from "@/components/effects/Confetti";
 
 interface PayLinkProps {
   orderId:   string;
@@ -40,11 +41,14 @@ export const PayLinkCard: React.FC<PayLinkProps> = ({
   const isExpired = secondsLeft === 0;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.94, y: 16 }}
-      animate={{ opacity: 1, scale: 1,    y: 0  }}
-      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      data-testid="pay-link-card"
+    <>
+      <Confetti />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 16 }}
+        animate={{ opacity: 1, scale: 1,    y: 0  }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        data-testid="pay-link-card"
+
       className="w-full max-w-sm rounded-3xl overflow-hidden my-3 text-white border-2"
       style={{
         background:   "linear-gradient(135deg, #4C1D6E 0%, #6B2D96 100%)",
@@ -132,6 +136,8 @@ export const PayLinkCard: React.FC<PayLinkProps> = ({
         </p>
       </div>
     </motion.div>
+    </>
   );
 };
+
 export default PayLinkCard;

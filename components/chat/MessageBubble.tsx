@@ -10,6 +10,10 @@ import CategoryChips from "../ui/CategoryChips";
 import PayLinkCard from "../checkout/PayLinkCard";
 import StatusTimeline from "../ui/StatusTimeline";
 import CheckoutForm from "../checkout/CheckoutForm";
+import { WelcomeBackBanner } from "../customer/WelcomeBackBanner";
+import { OrderHistoryCard } from "../customer/OrderHistoryCard";
+import { SavedAddressPicker } from "../customer/SavedAddressPicker";
+import type { CustomerDetails, OrderHistoryItem, SavedAddress } from "@/lib/phase2-types";
 import { CheckCircle2, AlertCircle, Volume2, VolumeX } from "lucide-react";
 
 interface MessageBubbleProps {
@@ -18,10 +22,12 @@ interface MessageBubbleProps {
   onOpenDetails?: (productId: string) => void;
   onSelectCategory?: (slug: string, name: string) => void;
   onSubmitCheckout?: (details: any) => void;
+  onSubmitQuickMessage?: (text: string) => void;
   activeSpeakingId?: string | null;
   onSpeak?: (text: string, messageId: string) => void;
   ttsError?: string | null;
 }
+
 
 const customBubbleVariants = {
   hidden:  { opacity: 0, y: 14, scale: 0.97 },
@@ -40,6 +46,9 @@ export const cleanMessageText = (text: string): string => {
   cleaned = cleaned.replace(/\[\s*link\s*:\s*/gi, "[");
   cleaned = cleaned.replace(/\bLink\s*:\s*(?=\[[^\]]+\]\([^)]+\))/gi, "");
 
+  // Fix awkward payment phrases like "Here is your payment [Complete your order here](...)" -> "Here is your payment link: [Complete your order here](...)"
+  cleaned = cleaned.replace(/Here is your payment\s+(?=\[)/gi, "Here is your payment link: ");
+
   // Replace 3 or more consecutive newlines with 2 newlines
   cleaned = cleaned.replace(/\n{3,}/g, "\n\n");
   return cleaned.trim();
@@ -51,10 +60,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onOpenDetails,
   onSelectCategory,
   onSubmitCheckout,
+  onSubmitQuickMessage,
   activeSpeakingId = null,
   onSpeak,
   ttsError = null,
 }) => {
+
   const hasRenderableContent = (msg: ChatMessage) => {
     if (msg.content && msg.content.trim() !== "") {
       return true;
@@ -114,7 +125,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               href={linkUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-bold underline text-brand-purple dark:text-brand-purple-mid hover:opacity-85 transition-opacity"
+              className="font-bold underline text-purple-700 dark:text-yellow-300 hover:text-purple-900 dark:hover:text-yellow-200 transition-colors inline-flex items-center gap-0.5"
               onClick={(e) => e.stopPropagation()}
             >
               {parseInline(linkText)}
@@ -124,6 +135,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         return part;
       });
     };
+
 
     lines.forEach((line, lineIdx) => {
       const trimmedLine = line.trim();
@@ -325,6 +337,93 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             )}
           </div>
         );
+      case "kapruka_customer_details":
+        if (!result) return null;
+        const customerObj = (result as any)?.customer || (result as any)?.customer_details || (result as any)?.data || result;
+        const custName =
+          (typeof customerObj === "string" ? customerObj : null) ||
+          customerObj?.name ||
+          customerObj?.customer_name ||
+          customerObj?.recipient_name ||
+          customerObj?.first_name ||
+          "there";
+        const custEmail = customerObj?.email || customerObj?.customer_email || "";
+
+        return (
+          <div key={tool} className="w-full mt-2">
+            <WelcomeBackBanner
+              customer={{ name: custName, email: custEmail }}
+              onTrackOrder={() => onSubmitQuickMessage?.("What did I order last time?")}
+            />
+          </div>
+        );
+
+
+      case "kapruka_order_history":
+        const ordersList: OrderHistoryItem[] =
+          result.orders ||
+          result.order_history ||
+          result.history ||
+          (Array.isArray(result) ? result : []);
+        if (ordersList.length === 0) return null;
+        return (
+          <div key={tool} className="w-full mt-2 space-y-2">
+            {ordersList.map((order, idx) => {
+              const fallbackRef =
+                (order as any).order_reference ||
+                (order as any).order_ref ||
+                (order as any).order_id ||
+                (order as any).order_number ||
+                (order as any).orderNumber ||
+                (order as any).reference ||
+                (order as any).order_no ||
+                (order as any).orderNo ||
+                (order as any).id ||
+                "";
+
+              return (
+                <OrderHistoryCard
+                  key={fallbackRef || idx}
+                  order={order}
+                  index={idx}
+                  onReorder={(ref) => {
+                    const target = ref || fallbackRef;
+                    if (target) {
+                      onSubmitQuickMessage?.(`Order #${target} again`);
+                    } else {
+                      onSubmitQuickMessage?.("I want to reorder my previous items");
+                    }
+                  }}
+                  onTrack={(ref) => {
+                    const target = ref || fallbackRef;
+                    if (target) {
+                      onSubmitQuickMessage?.(`Track order #${target}`);
+                    }
+                  }}
+                />
+              );
+            })}
+          </div>
+        );
+
+      case "kapruka_customer_addresses":
+        const addressList: SavedAddress[] = result.addresses || (Array.isArray(result) ? result : []);
+        if (addressList.length === 0) return null;
+        return (
+          <div key={tool} className="w-full mt-2">
+            <SavedAddressPicker
+              addresses={addressList}
+              onSelect={(addr) =>
+                onSubmitQuickMessage?.(
+                  `Please deliver to ${addr.recipient_name || "me"} at ${addr.address}, ${addr.city}${addr.phone ? ` (Phone: ${addr.phone})` : ""}`
+                )
+              }
+              onUseNew={() => onSubmitQuickMessage?.("I'd like to deliver to a different address")}
+            />
+          </div>
+        );
+
+
       default:
         return null;
     }
@@ -475,43 +574,62 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               {isStreaming && <span className="cursor-blink" />}
             </div>
 
-            {/* TTS Speak Button */}
+            {/* TTS Speak Button + Speed Pill */}
             {!isUser && !isStreaming && onSpeak && (
-              <button
-                onClick={() => onSpeak(cleanMessageText(message.content), message.id)}
-                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 mt-2 ${
-                  activeSpeakingId === message.id
-                    ? ttsError
-                      ? "bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400"
-                      : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
-                    : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.06]"
-                }`}
-                title={
-                  activeSpeakingId === message.id
-                    ? ttsError
+              <div className="flex items-center gap-1 mt-2">
+                <button
+                  onClick={() => onSpeak(cleanMessageText(message.content), message.id)}
+                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    activeSpeakingId === message.id
                       ? ttsError
-                      : "Stop speaking"
-                    : "Speak message"
-                }
-                aria-label={
-                  activeSpeakingId === message.id
-                    ? ttsError
+                        ? "bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400"
+                        : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                      : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-black/[0.03] dark:bg-white/[0.03] hover:bg-black/[0.06] dark:hover:bg-white/[0.06]"
+                  }`}
+                  title={
+                    activeSpeakingId === message.id
                       ? ttsError
-                      : "Stop speaking"
-                    : "Speak message"
-                }
-              >
-                {activeSpeakingId === message.id ? (
-                  ttsError ? (
-                    <AlertCircle size={15} className="text-rose-600 dark:text-rose-400" />
+                        ? ttsError
+                        : "Stop speaking"
+                      : "Speak message"
+                  }
+                  aria-label={
+                    activeSpeakingId === message.id
+                      ? ttsError
+                        ? ttsError
+                        : "Stop speaking"
+                      : "Speak message"
+                  }
+                >
+                  {activeSpeakingId === message.id ? (
+                    ttsError ? (
+                      <AlertCircle size={15} className="text-rose-600 dark:text-rose-400" />
+                    ) : (
+                      <VolumeX size={15} className="animate-pulse" />
+                    )
                   ) : (
-                    <VolumeX size={15} className="animate-pulse" />
-                  )
-                ) : (
-                  <Volume2 size={15} />
+                    <Volume2 size={15} />
+                  )}
+                </button>
+
+                {activeSpeakingId === message.id && (
+                  <button
+                    onClick={() => {
+                      const audios = document.querySelectorAll("audio");
+                      audios.forEach((a) => {
+                        const nextRate = a.playbackRate === 1 ? 1.25 : a.playbackRate === 1.25 ? 1.5 : 1;
+                        a.playbackRate = nextRate;
+                      });
+                    }}
+                    title="Change voice speed"
+                    className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-yellow-300 border border-purple-200 dark:border-purple-700 cursor-pointer"
+                  >
+                    Speed ⚡
+                  </button>
                 )}
-              </button>
+              </div>
             )}
+
           </div>
         )}
 

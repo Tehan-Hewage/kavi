@@ -1,4 +1,18 @@
 import { getMcpClient, resetMcpClient } from "./mcp-client";
+import { assertEmailFromConversation } from "./phase2-guard";
+import type {
+  CustomerDetails,
+  OrderHistoryResponse,
+  CustomerAddressesResponse,
+} from "./phase2-types";
+
+const PHASE2_TOKEN = process.env.KAPRUKA_PHASE2_TOKEN;
+
+if (!PHASE2_TOKEN) {
+  console.warn(
+    "⚠️  KAPRUKA_PHASE2_TOKEN is not set — Phase 2 customer tools will fail."
+  );
+}
 
 export async function callMcpTool(
   toolName: string,
@@ -19,7 +33,6 @@ export async function callMcpTool(
     //   arguments: { params: { q: "...", ... }, response_format: "json" }
     // This is non-standard vs. the MCP spec (which expects arguments flat),
     // but matches the Kapruka server implementation.
-    // VERIFY against live server if tool calls return "unknown parameter" errors.
     const argumentsObject = clonedInput.params ? clonedInput : { params: clonedInput };
 
     // Force JSON response format so the UI can render structured product carousels/cards
@@ -65,13 +78,93 @@ export async function callMcpTool(
   }
 }
 
+// ─── Phase 2 Customer Tools ─────────────────────────────────────
+
+export async function getCustomerDetails(
+  email: string,
+  conversationEmails: Set<string>
+): Promise<CustomerDetails> {
+  assertEmailFromConversation(email, conversationEmails);
+
+  const client = await getMcpClient();
+  const result = await client.callTool({
+    name: "kapruka_customer_details",
+    arguments: {
+      params: {
+        email,
+        access_token:    PHASE2_TOKEN,
+        response_format: "json",
+      },
+    },
+  });
+
+  return parsePhase2Result<CustomerDetails>(result);
+}
+
+export async function getOrderHistory(
+  email: string,
+  conversationEmails: Set<string>,
+  limit = 5
+): Promise<OrderHistoryResponse> {
+  assertEmailFromConversation(email, conversationEmails);
+
+  const client = await getMcpClient();
+  const result = await client.callTool({
+    name: "kapruka_order_history",
+    arguments: {
+      params: {
+        email,
+        access_token:    PHASE2_TOKEN,
+        limit:           Math.min(Math.max(limit || 5, 1), 20),
+        response_format: "json",
+      },
+    },
+  });
+
+  return parsePhase2Result<OrderHistoryResponse>(result);
+}
+
+export async function getCustomerAddresses(
+  email: string,
+  conversationEmails: Set<string>
+): Promise<CustomerAddressesResponse> {
+  assertEmailFromConversation(email, conversationEmails);
+
+  const client = await getMcpClient();
+  const result = await client.callTool({
+    name: "kapruka_customer_addresses",
+    arguments: {
+      params: {
+        email,
+        access_token:    PHASE2_TOKEN,
+        response_format: "json",
+      },
+    },
+  });
+
+  return parsePhase2Result<CustomerAddressesResponse>(result);
+}
+
+function parsePhase2Result<T>(result: unknown): T {
+  const content = (result as { content?: { type: string; text: string }[] })?.content;
+  if (!content) throw new Error("Empty response from Phase 2 tool");
+
+  const textBlock = content.find(c => c.type === "text");
+  if (!textBlock) throw new Error("No text content in Phase 2 tool response");
+
+  try {
+    const parsed = JSON.parse(textBlock.text) as T;
+    return sanitizeMcpResult(parsed);
+  } catch {
+    throw new Error(`Phase 2 tool returned non-JSON: ${textBlock.text.slice(0, 200)}`);
+  }
+}
+
 function cleanGarbledText(text: string): string {
   if (typeof text !== "string") return text;
   
-  // 1. Replaces pseudo-entities representing garbled UTF-8 characters (like en-dash, smart quotes, etc.)
   let cleaned = text.replace(/(?:[Nn&]#(?:226|8364|8211|8212|8217|8220|8221|147|148|150|151|153);?\s*)+/g, " - ");
   
-  // 2. Decode standard HTML entities
   cleaned = cleaned
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
@@ -82,7 +175,6 @@ function cleanGarbledText(text: string): string {
     .replace(/&#40;/g, "(")
     .replace(/&#41;/g, ")");
     
-  // 3. Clean up double spaces or extra dashes
   cleaned = cleaned.replace(/\s*-\s*-\s*/g, " - ");
   cleaned = cleaned.replace(/\s+/g, " ");
   return cleaned.trim();
